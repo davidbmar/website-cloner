@@ -6,6 +6,7 @@ import path from 'path';
 import chalk from 'chalk';
 import Logger from './lib/logger.js';
 import Enumerator from './lib/enumerator.js';
+import Downloader from './lib/downloader.js';
 
 const program = new Command();
 
@@ -97,18 +98,35 @@ async function main() {
     // PHASE 3: ASSET EXTRACTION (Clone Stage)
     // ============================================================
     if (runDownload) {
-      logger.section('Starting Phase 3: Asset Extraction');
-      logger.warn('Phase 3 (download) is not yet implemented');
-      logger.info('This phase will:');
-      logger.info('  - Read manifest.json');
-      logger.info('  - Download HTML, CSS, JS, images, fonts');
-      logger.info('  - Rewrite links for static hosting');
-      logger.info('  - Detect and mark dynamic content');
-      logger.info('  - Generate dynamic-manifest.json');
+      // Check manifest exists
+      const outputDir = config.output.localDirectory;
+      const manifestPath = path.join(outputDir, 'manifest.json');
 
-      if (!options.skipS3 && config.s3.enabled) {
-        logger.info('  - Upload to S3 with static website hosting');
+      if (!fs.existsSync(manifestPath)) {
+        logger.error('manifest.json not found! Run --enumerate first.');
+        logger.info('Example: node clone-website.js --config=' + options.config + ' --enumerate');
+        process.exit(1);
       }
+
+      // Download assets
+      const downloader = new Downloader(config, logger);
+      const downloadResult = await downloader.downloadFromManifest(manifestPath);
+
+      // TODO: Link rewriting (Phase 4)
+      logger.info('');
+      logger.warn('Link rewriting not yet implemented');
+      logger.info('Files have been downloaded but links are still absolute URLs');
+
+      // TODO: Dynamic content detection (Phase 5)
+      logger.warn('Dynamic content detection not yet implemented');
+
+      // TODO: S3 upload (Phase 6)
+      if (!options.skipS3 && config.s3.enabled) {
+        logger.warn('S3 upload not yet implemented');
+      }
+
+      console.log('\n' + chalk.green.bold('✓ Download Complete!'));
+      console.log('Next: Implement link rewriting and dynamic detection');
     }
 
     console.log('\n' + chalk.green.bold('✓ Process Complete!\n'));
