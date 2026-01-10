@@ -1,0 +1,9 @@
+{
+  "target": {"url": "https://info.cern.ch", "description": "Test 2: Depth control"},
+  "crawling": {"maxDepth": 2, "maxPages": 20, "sameDomainOnly": true, "respectRobotsTxt": false},
+  "network": {"timeout": 20000, "userAgent": "Mozilla/5.0 (compatible; WebsiteCloner/1.0 Test)"},
+  "rateLimit": {"enabled": true, "requestsPerSecond": 2},
+  "output": {"localDirectory": "./output"},
+  "s3": {"enabled": false},
+  "logging": {"level": "info", "logToFile": true}
+}

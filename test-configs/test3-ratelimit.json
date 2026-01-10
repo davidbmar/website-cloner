@@ -1,0 +1,9 @@
+{
+  "target": {"url": "https://example.com", "description": "Test 3: Rate limiting"},
+  "crawling": {"maxDepth": 1, "maxPages": 5, "sameDomainOnly": true},
+  "network": {"timeout": 15000, "userAgent": "Mozilla/5.0 (compatible; WebsiteCloner/1.0 Test)"},
+  "rateLimit": {"enabled": true, "requestsPerSecond": 1, "burstSize": 2},
+  "output": {"localDirectory": "./output"},
+  "s3": {"enabled": false},
+  "logging": {"level": "info", "logToFile": true}
+}

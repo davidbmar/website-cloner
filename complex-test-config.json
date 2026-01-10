@@ -1,21 +1,18 @@
 {
   "target": {
-    "url": "https://otter.ai",
-    "description": "Example website clone"
+    "url": "https://golang.org/doc/",
+    "description": "Complex test: Golang documentation site with multiple levels"
   },
   "crawling": {
-    "maxDepth": 5,
-    "maxPages": 500,
+    "maxDepth": 3,
+    "maxPages": 50,
     "sameDomainOnly": true,
     "includeSubdomains": false,
     "respectRobotsTxt": true,
     "followRedirects": true,
     "ignorePatterns": [
-      "**/logout",
-      "**/admin/**",
-      "**/login",
-      "**/*.pdf",
-      "**/*.zip"
+      "**/play/**",
+      "**/pkg/**"
     ],
     "allowedPatterns": []
   },
@@ -67,10 +64,10 @@
     "cleanBeforeRun": false
   },
   "s3": {
-    "enabled": true,
-    "bucket": "my-cloned-websites",
+    "enabled": false,
+    "bucket": "test-cloned-websites",
     "region": "us-west-2",
-    "prefix": "example-com-clone",
+    "prefix": "golang-docs-test",
     "acl": "public-read",
     "configureWebsiteHosting": true,
     "indexDocument": "index.html",

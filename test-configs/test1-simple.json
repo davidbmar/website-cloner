@@ -1,0 +1,11 @@
+{
+  "target": {"url": "https://example.com", "description": "Test 1: Simple static site"},
+  "crawling": {"maxDepth": 1, "maxPages": 10, "sameDomainOnly": true, "respectRobotsTxt": false, "ignorePatterns": [], "allowedPatterns": []},
+  "assets": {"downloadImages": true, "downloadCSS": true, "downloadJS": true, "downloadFonts": true, "downloadVideos": false, "maxFileSize": 10485760},
+  "dynamic": {"detectAPIEndpoints": true, "detectFormSubmissions": true, "detectWebSockets": true, "detectEmptyDivs": true, "markerAttribute": "data-marker", "markerValue": "LLM_FIX_REQUIRED", "generateManifest": true},
+  "network": {"concurrency": 3, "retryAttempts": 2, "retryDelay": 1000, "timeout": 15000, "userAgent": "Mozilla/5.0 (compatible; WebsiteCloner/1.0 Test)", "headers": {}, "cookies": []},
+  "rateLimit": {"enabled": true, "requestsPerSecond": 3, "burstSize": 5},
+  "output": {"localDirectory": "./output", "preserveDirectoryStructure": true, "cleanBeforeRun": false},
+  "s3": {"enabled": false},
+  "logging": {"level": "info", "logToFile": true, "logDirectory": "./logs", "progressUpdates": true}
+}
