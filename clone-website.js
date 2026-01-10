@@ -8,6 +8,7 @@ import Logger from './lib/logger.js';
 import Enumerator from './lib/enumerator.js';
 import Downloader from './lib/downloader.js';
 import LinkRewriter from './lib/link-rewriter.js';
+import DynamicDetector from './lib/dynamic-detector.js';
 
 const program = new Command();
 
@@ -122,9 +123,13 @@ async function main() {
         downloadResult.assetMapping
       );
 
-      // TODO: Dynamic content detection (Phase 5)
+      // Phase 5: Dynamic content detection
       logger.info('');
-      logger.warn('Dynamic content detection not yet implemented');
+      const dynamicDetector = new DynamicDetector(config, logger);
+      await dynamicDetector.detectAll(
+        downloadResult.pages,
+        downloadResult.assets
+      );
 
       // TODO: S3 upload (Phase 6)
       if (!options.skipS3 && config.s3.enabled) {
