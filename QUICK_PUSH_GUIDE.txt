@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════
+  QUICK PUSH GUIDE - Copy/Paste These Commands
+═══════════════════════════════════════════════════════════
+
+STEP 1: Get your token
+-----------------------
+Go to: https://github.com/settings/tokens
+Click: "Generate new token (classic)"
+Name: website-cloner
+Check: ✅ repo (all boxes)
+Click: "Generate token"
+COPY the token (starts with ghp_)
+
+
+STEP 2: Verify repository exists
+---------------------------------
+Go to: https://github.com/davidbmar/website-cloner
+
+If you see "404", create it:
+  1. Go to: https://github.com/new
+  2. Name: website-cloner
+  3. DON'T check any boxes
+  4. Click "Create repository"
+
+
+STEP 3: Push with this command
+-------------------------------
+Replace YOUR_TOKEN_HERE with your actual token:
+
+cd /home/ubuntu/src/website-cloner
+git push https://YOUR_TOKEN_HERE@github.com/davidbmar/website-cloner.git main:main --set-upstream
+
+
+EXAMPLE (with fake token):
+---------------------------
+git push https://ghp_1234567890abcdefgh@github.com/davidbmar/website-cloner.git main:main --set-upstream
+
+
+STEP 4: After success
+----------------------
+git branch --set-upstream-to=origin/main main
+
+
+═══════════════════════════════════════════════════════════
+
+WHAT SUCCESS LOOKS LIKE:
+-------------------------
+Enumerating objects: 20, done.
+Counting objects: 100% (20/20), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (18/18), done.
+Writing objects: 100% (20/20), 15.43 KiB | 3.86 MiB/s, done.
+Total 20 (delta 3), reused 0 (delta 0)
+remote: Resolving deltas: 100% (3/3), done.
+To https://github.com/davidbmar/website-cloner.git
+ * [new branch]      main -> main
+Branch 'main' set up to track remote branch 'main' from 'origin'.
+
+✓ SUCCESS!
+
+
+═══════════════════════════════════════════════════════════
+
+IF IT FAILS:
+------------
+
+Error: "Authentication failed"
+→ Token is wrong or doesn't have 'repo' scope
+→ Create a NEW token with 'repo' checked
+
+Error: "Repository not found"
+→ Create repository at https://github.com/new
+
+Error: "Bad hostname" or "URL rejected"
+→ Make sure you replaced YOUR_TOKEN_HERE with your actual token
+→ Don't include https:// or any other text, JUST the token
+
+Error: "Permission denied"
+→ Make sure the token has 'repo' scope
+→ Verify you own the repository
+
+
+═══════════════════════════════════════════════════════════
+
+IMPORTANT NOTES:
+----------------
+1. Paste ONLY the token (ghp_xxxxx...), NOT the full URL
+2. Token must have "repo" scope checked
+3. Repository must exist before pushing
+4. Token is like a password - don't share it!
+
+═══════════════════════════════════════════════════════════
