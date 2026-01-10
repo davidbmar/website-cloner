@@ -146,10 +146,37 @@ async function main() {
       }
 
       console.log('\n' + chalk.green.bold('✓ Clone Complete!'));
+
       if (config.s3.enabled && !options.skipS3) {
-        console.log('Website has been deployed to S3!');
+        const region = config.s3.region || 'us-east-1';
+        const websiteUrl = `http://${config.s3.bucket}.s3-website-${region}.amazonaws.com`;
+
+        console.log('\n' + chalk.cyan('═'.repeat(70)));
+        console.log(chalk.bold.white('  🌐 Your Website is Live!'));
+        console.log(chalk.cyan('═'.repeat(70)));
+        console.log('');
+        console.log(chalk.white('  Website URL: ') + chalk.green.underline(websiteUrl));
+        console.log('');
+        console.log(chalk.yellow('  📝 Testing Instructions:'));
+        console.log(chalk.gray('     1. Open the URL above in your browser'));
+        console.log(chalk.gray('     2. If you see old content, do a hard refresh:'));
+        console.log(chalk.gray('        • Chrome/Edge: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)'));
+        console.log(chalk.gray('        • Firefox: Ctrl+F5 or Cmd+Shift+R'));
+        console.log(chalk.gray('        • Safari: Cmd+Option+R'));
+        console.log(chalk.gray('     3. Or open in an incognito/private window'));
+        console.log('');
+        console.log(chalk.yellow('  📊 Review Dynamic Content:'));
+        console.log(chalk.gray(`     • Check: ${config.output.localDirectory}/dynamic-manifest.json`));
+        console.log(chalk.gray('     • This shows what content needs backend/API fixes'));
+        console.log('');
+        console.log(chalk.cyan('═'.repeat(70)));
+        console.log('');
       } else {
         console.log('Files are ready for deployment in: ' + config.output.localDirectory);
+        console.log('');
+        console.log(chalk.yellow('Next steps:'));
+        console.log(chalk.gray('  1. Enable S3 in config and run again with --download'));
+        console.log(chalk.gray('  2. Or manually copy files to your web server'));
       }
     }
 
