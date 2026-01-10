@@ -1,0 +1,197 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║          WEBSITE CLONER - GITHUB SETUP CHECKLIST             ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Follow these steps to add your project to GitHub.
+
+═══════════════════════════════════════════════════════════════
+ STEP 1: CREATE GITHUB REPOSITORY
+═══════════════════════════════════════════════════════════════
+
+[ ] 1. Go to: https://github.com/new
+
+[ ] 2. Fill in details:
+        Repository name: website-cloner
+        Description: A two-phase website cloning tool with BFS enumeration and S3 deployment
+        Visibility: Public or Private (your choice)
+
+[ ] 3. IMPORTANT: Do NOT check these boxes:
+        ✗ Add a README file
+        ✗ Add .gitignore
+        ✗ Choose a license
+        (We already have these files!)
+
+[ ] 4. Click "Create repository"
+
+[ ] 5. SAVE the URL shown on next page:
+        _________________________________________________
+        (Write your repository URL here)
+
+
+═══════════════════════════════════════════════════════════════
+ STEP 2: CONFIGURE GIT (First time only)
+═══════════════════════════════════════════════════════════════
+
+[ ] If this is your first time using git on this machine, run:
+
+        git config --global user.name "Your Name"
+        git config --global user.email "your.email@example.com"
+
+
+═══════════════════════════════════════════════════════════════
+ STEP 3: AUTOMATED PUSH (EASIEST METHOD)
+═══════════════════════════════════════════════════════════════
+
+[ ] 1. Run the automated push script:
+
+        cd /home/ubuntu/src/website-cloner
+        bash push-to-github.sh
+
+[ ] 2. Follow the prompts:
+        - Enter your repository URL
+        - Confirm push to GitHub
+        - Enter credentials if prompted
+
+[ ] 3. Done! ✓
+
+
+═══════════════════════════════════════════════════════════════
+ STEP 4: MANUAL PUSH (Alternative method)
+═══════════════════════════════════════════════════════════════
+
+If you prefer manual control, follow these commands:
+
+[ ] 1. Initialize git:
+        cd /home/ubuntu/src/website-cloner
+        bash init-git.sh
+
+[ ] 2. Add remote (replace YOUR-USERNAME):
+        git remote add origin https://github.com/YOUR-USERNAME/website-cloner.git
+
+[ ] 3. Push to GitHub:
+        git branch -M main
+        git push -u origin main
+
+
+═══════════════════════════════════════════════════════════════
+ STEP 5: VERIFY ON GITHUB
+═══════════════════════════════════════════════════════════════
+
+[ ] 1. Go to: https://github.com/YOUR-USERNAME/website-cloner
+
+[ ] 2. Check that you see:
+        [ ] All files are present
+        [ ] README.md is displayed
+        [ ] Folders: lib/, docs/
+        [ ] Scripts: setup.sh, verify.sh, etc.
+
+
+═══════════════════════════════════════════════════════════════
+ STEP 6: ADD REPOSITORY DETAILS (Optional but recommended)
+═══════════════════════════════════════════════════════════════
+
+[ ] 1. On GitHub, click the ⚙️ icon next to "About"
+
+[ ] 2. Add these tags:
+        [ ] nodejs
+        [ ] web-scraper
+        [ ] website-cloner
+        [ ] s3
+        [ ] aws
+        [ ] bfs
+        [ ] crawler
+
+[ ] 3. Add description (copy from above)
+
+[ ] 4. Save changes
+
+
+═══════════════════════════════════════════════════════════════
+ AUTHENTICATION OPTIONS
+═══════════════════════════════════════════════════════════════
+
+Choose ONE method:
+
+OPTION A: Personal Access Token (HTTPS) - Recommended
+───────────────────────────────────────────────────
+[ ] 1. Go to: https://github.com/settings/tokens
+[ ] 2. Click "Generate new token (classic)"
+[ ] 3. Give it a name: "website-cloner"
+[ ] 4. Check "repo" (all checkboxes under repo)
+[ ] 5. Generate and COPY the token
+[ ] 6. Use as password when pushing
+        Username: [your GitHub username]
+        Password: [paste the token]
+
+OPTION B: SSH Keys
+──────────────────
+[ ] 1. Generate key:
+        ssh-keygen -t ed25519 -C "your.email@example.com"
+
+[ ] 2. Copy public key:
+        cat ~/.ssh/id_ed25519.pub
+
+[ ] 3. Add to GitHub: https://github.com/settings/ssh/new
+
+[ ] 4. Use SSH URL: git@github.com:username/website-cloner.git
+
+
+═══════════════════════════════════════════════════════════════
+ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+Problem: "Authentication failed"
+Solution: Use Personal Access Token, not your GitHub password
+          See OPTION A above
+
+Problem: "Permission denied"
+Solution: Check repository exists and you have write access
+
+Problem: "remote origin already exists"
+Solution: git remote remove origin
+          Then add it again
+
+Problem: Push shows errors
+Solution: Read GITHUB_SETUP.md for detailed troubleshooting
+
+
+═══════════════════════════════════════════════════════════════
+ SUCCESS! YOUR REPOSITORY IS LIVE
+═══════════════════════════════════════════════════════════════
+
+Your repository URL:
+https://github.com/_____________________/website-cloner
+
+Others can now clone it with:
+git clone https://github.com/YOUR-USERNAME/website-cloner.git
+
+
+═══════════════════════════════════════════════════════════════
+ NEXT STEPS (After pushing)
+═══════════════════════════════════════════════════════════════
+
+[ ] Create development branch:
+        git checkout -b develop
+        git push -u origin develop
+
+[ ] Add collaborators (if team project):
+        GitHub → Settings → Collaborators
+
+[ ] Set up branch protection (optional):
+        GitHub → Settings → Branches → Add rule
+
+[ ] Create first release when Phase 3 is complete:
+        git tag -a v0.2.0 -m "Release v0.2.0"
+        git push origin v0.2.0
+
+
+═══════════════════════════════════════════════════════════════
+
+Need more help?
+- Read: GITHUB_SETUP.md (detailed guide)
+- Run: bash status.sh (check project status)
+- Docs: https://docs.github.com/en/get-started
+
+═══════════════════════════════════════════════════════════════
