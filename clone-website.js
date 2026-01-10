@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import Logger from './lib/logger.js';
 import Enumerator from './lib/enumerator.js';
 import Downloader from './lib/downloader.js';
+import LinkRewriter from './lib/link-rewriter.js';
 
 const program = new Command();
 
@@ -112,12 +113,17 @@ async function main() {
       const downloader = new Downloader(config, logger);
       const downloadResult = await downloader.downloadFromManifest(manifestPath);
 
-      // TODO: Link rewriting (Phase 4)
+      // Phase 4: Link rewriting
       logger.info('');
-      logger.warn('Link rewriting not yet implemented');
-      logger.info('Files have been downloaded but links are still absolute URLs');
+      const linkRewriter = new LinkRewriter(config, logger);
+      await linkRewriter.rewriteAll(
+        downloadResult.pages,
+        downloadResult.assets,
+        downloadResult.assetMapping
+      );
 
       // TODO: Dynamic content detection (Phase 5)
+      logger.info('');
       logger.warn('Dynamic content detection not yet implemented');
 
       // TODO: S3 upload (Phase 6)
