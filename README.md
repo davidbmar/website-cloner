@@ -1,0 +1,209 @@
+# Website Cloner
+
+A two-phase website cloning tool that discovers URLs via BFS, then downloads and deploys to S3.
+
+## Features
+
+- **Phase 2 (Enumeration)**: Breadth-First Search to discover all URLs without downloading
+- **Phase 3 (Clone)**: Download HTML, CSS, JS, images, fonts from discovered URLs
+- **Link Rewriting**: Convert absolute URLs to relative paths for static hosting
+- **Dynamic Content Detection**: Mark API calls, forms, WebSockets with data attributes for LLM processing
+- **S3 Deployment**: Upload to S3 with static website hosting configuration
+- **Rate Limiting**: Respect target servers with configurable request rates
+- **Robots.txt**: Honor robots.txt rules
+- **Progress Tracking**: Real-time progress updates during crawling
+
+## Installation
+
+### Quick Setup (Recommended)
+
+Run the automated setup script:
+
+```bash
+cd /home/ubuntu/src/website-cloner
+bash setup.sh
+```
+
+This will:
+- Check Node.js and npm versions
+- Install all dependencies
+- Create output and logs directories
+- Make the CLI executable
+- Create a starter configuration file
+
+### Manual Installation
+
+```bash
+cd /home/ubuntu/src/website-cloner
+npm install
+mkdir -p output logs
+chmod +x clone-website.js
+cp config.example.json my-config.json
+```
+
+### Verify Installation
+
+```bash
+bash verify.sh
+```
+
+This runs automated tests to ensure everything is set up correctly.
+
+## Quick Start
+
+### 1. Create Configuration File
+
+```bash
+cp config.example.json mysite-config.json
+# Edit mysite-config.json with your target URL and settings
+```
+
+### 2. Run Enumeration Phase (Phase 2)
+
+Discover all URLs without downloading:
+
+```bash
+node clone-website.js --config=mysite-config.json --enumerate
+```
+
+This generates `output/manifest.json` with all discovered URLs.
+
+### 3. Review Manifest
+
+```bash
+cat output/manifest.json
+```
+
+Check the total URLs, max depth, and URL list before proceeding.
+
+### 4. Run Download Phase (Phase 3)
+
+**Note: Phase 3 is not yet implemented.** Coming soon!
+
+```bash
+node clone-website.js --config=mysite-config.json --download
+```
+
+## Configuration
+
+See `config.example.json` for full configuration schema.
+
+### Key Settings
+
+- `target.url`: Starting URL to clone
+- `crawling.maxDepth`: Maximum BFS depth (levels from seed URL)
+- `crawling.maxPages`: Maximum number of pages to crawl
+- `crawling.ignorePatterns`: Glob patterns to exclude (e.g., `**/logout`, `**/admin/**`)
+- `rateLimit.requestsPerSecond`: Rate limiting to respect target server
+- `s3.bucket`: S3 bucket name for deployment
+
+## CLI Options
+
+```bash
+# Enumerate URLs only (Phase 2)
+node clone-website.js --config=config.json --enumerate
+
+# Download from existing manifest (Phase 3)
+node clone-website.js --config=config.json --download
+
+# Run both phases
+node clone-website.js --config=config.json --full
+
+# Skip S3 upload
+node clone-website.js --config=config.json --full --skip-s3
+
+# Verbose logging
+node clone-website.js --config=config.json --enumerate -v
+```
+
+## Two-Phase Approach
+
+### Why Two Phases?
+
+1. **Cost Estimation**: Review scope before downloading
+2. **Prevent Waste**: Avoid wasting S3 storage on broken crawls
+3. **Scope Verification**: Ensure crawler is capturing the right pages
+
+### Phase 2: Enumeration (Map Stage)
+
+- BFS traversal to discover all URLs
+- Generates `manifest.json` with complete URL list
+- **STOPS HERE** - allows review before downloading
+
+### Phase 3: Asset Extraction (Clone Stage)
+
+- Reads `manifest.json`
+- Downloads HTML, CSS, JS, images, fonts for each URL
+- Rewrites links for static hosting
+- Marks dynamic content with `data-marker="LLM_FIX_REQUIRED"`
+- Uploads to S3 with correct Content-Type headers
+
+## Output Files
+
+```
+output/
+├── manifest.json              # Phase 2: Discovered URLs
+├── dynamic-manifest.json      # Phase 3: Dynamic content analysis
+├── [domain]/                  # Phase 3: Downloaded site
+│   ├── index.html
+│   ├── css/
+│   ├── js/
+│   └── images/
+logs/
+└── clone-[timestamp].log      # Execution logs
+```
+
+## Example
+
+```bash
+# Clone example.com
+node clone-website.js --config=test-config.json --enumerate
+
+# Output:
+# ✓ Enumeration Complete!
+# Total URLs discovered: 1
+# Max depth reached: 0
+# Manifest saved to: output/manifest.json
+```
+
+## Implementation Status
+
+### ✅ Completed
+- [x] Project setup
+- [x] Configuration system
+- [x] Logger with colors and file output
+- [x] URL utilities (normalization, validation, resolution)
+- [x] BFS enumeration (Phase 2)
+- [x] Manifest generation
+- [x] Rate limiting
+- [x] Robots.txt support
+- [x] CLI interface
+
+### 🚧 In Progress
+- [ ] Asset downloader (Phase 3)
+- [ ] Link rewriter
+- [ ] Dynamic content detector
+- [ ] S3 uploader
+
+### 📋 Planned
+- [ ] Full integration testing
+- [ ] Documentation improvements
+- [ ] Error recovery
+- [ ] Resume capability
+
+## Architecture
+
+```
+clone-website.js (Main CLI)
+├── lib/logger.js (Logging utilities)
+├── lib/url-utils.js (URL handling)
+├── lib/enumerator.js (Phase 2: BFS crawling)
+├── lib/downloader.js (Phase 3: Asset downloads) [TODO]
+├── lib/link-rewriter.js (URL rewriting) [TODO]
+├── lib/dynamic-detector.js (Dynamic content detection) [TODO]
+└── lib/s3-uploader.js (S3 deployment) [TODO]
+```
+
+## License
+
+MIT

@@ -1,0 +1,93 @@
+{
+  "target": {
+    "url": "https://example.com",
+    "description": "Example website clone"
+  },
+  "crawling": {
+    "maxDepth": 3,
+    "maxPages": 500,
+    "sameDomainOnly": true,
+    "includeSubdomains": false,
+    "respectRobotsTxt": true,
+    "followRedirects": true,
+    "ignorePatterns": [
+      "**/logout",
+      "**/admin/**",
+      "**/login",
+      "**/*.pdf",
+      "**/*.zip"
+    ],
+    "allowedPatterns": []
+  },
+  "assets": {
+    "downloadImages": true,
+    "downloadCSS": true,
+    "downloadJS": true,
+    "downloadFonts": true,
+    "downloadVideos": false,
+    "maxFileSize": 10485760,
+    "imageFormats": ["jpg", "jpeg", "png", "gif", "svg", "webp", "ico"],
+    "cssFormats": ["css"],
+    "jsFormats": ["js", "mjs"],
+    "fontFormats": ["woff", "woff2", "ttf", "otf", "eot"],
+    "videoFormats": ["mp4", "webm", "ogg"]
+  },
+  "dynamic": {
+    "detectAPIEndpoints": true,
+    "detectFormSubmissions": true,
+    "detectWebSockets": true,
+    "detectEmptyDivs": true,
+    "markerAttribute": "data-marker",
+    "markerValue": "LLM_FIX_REQUIRED",
+    "generateManifest": true
+  },
+  "network": {
+    "concurrency": 5,
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "timeout": 30000,
+    "userAgent": "Mozilla/5.0 (compatible; WebsiteCloner/1.0)",
+    "headers": {},
+    "cookies": [],
+    "authentication": {
+      "type": null,
+      "username": "",
+      "password": "",
+      "bearerToken": ""
+    }
+  },
+  "rateLimit": {
+    "enabled": true,
+    "requestsPerSecond": 2,
+    "burstSize": 10
+  },
+  "output": {
+    "localDirectory": "./output",
+    "preserveDirectoryStructure": true,
+    "cleanBeforeRun": false
+  },
+  "s3": {
+    "enabled": true,
+    "bucket": "my-cloned-websites",
+    "region": "us-west-2",
+    "prefix": "example-com-clone",
+    "acl": "public-read",
+    "configureWebsiteHosting": true,
+    "indexDocument": "index.html",
+    "errorDocument": "404.html",
+    "uploadConcurrency": 10,
+    "cacheControl": {
+      "html": "no-cache, no-store, must-revalidate",
+      "css": "public, max-age=31536000",
+      "js": "public, max-age=31536000",
+      "images": "public, max-age=31536000",
+      "fonts": "public, max-age=31536000"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "logToFile": true,
+    "logDirectory": "./logs",
+    "progressUpdates": true
+  }
+}
