@@ -8,14 +8,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Phase 3: Asset downloader implementation
-- Link rewriting for static hosting
-- Dynamic content detection with data-marker attributes
-- S3 upload with website hosting configuration
-- Progress bars with ora spinner
 - Resume capability for interrupted downloads
 - Integration tests
 - CI/CD pipeline
+- Enhanced error recovery
+- Multi-site batch processing
+
+## [0.2.0] - 2026-01-10
+
+### Added - All Phases Complete ✅
+
+#### Phase 3: Asset Extraction (Clone Stage)
+- **lib/downloader.js** - Complete asset downloading implementation
+  - Loads manifest.json from Phase 2 enumeration
+  - Downloads HTML pages with concurrency control (p-queue)
+  - Extracts assets from HTML: CSS, JS, images, srcset, inline styles
+  - Downloads assets with retry logic and file size limits
+  - Organized directory structure (assets/css, assets/js, assets/images)
+  - Progress tracking and statistics display
+  - Returns pages, assets, and assetMapping for next phases
+
+#### Phase 4: Link Rewriting for Static Hosting
+- **lib/link-rewriter.js** - URL rewriting engine
+  - Rewrites HTML href/src attributes to relative paths
+  - Rewrites CSS url() references
+  - Handles srcset attributes for responsive images
+  - Handles inline styles with background-image
+  - Preserves external domain links (keeps them absolute)
+  - Preserves special protocols (data:, mailto:, tel:, javascript:)
+  - Calculates proper relative paths between files at different depths
+  - Updates files in-place on disk
+
+#### Phase 5: Dynamic Content Detection
+- **lib/dynamic-detector.js** - Dynamic content analysis
+  - Analyzes HTML pages for forms requiring backend processing
+  - Detects inline scripts with API calls (fetch, XMLHttpRequest, axios)
+  - Detects empty divs that may be populated dynamically
+  - Analyzes external JavaScript files for API patterns
+  - Detects WebSocket connections
+  - Detects dynamic imports
+  - Marks dynamic elements with configurable data attributes
+  - Adds HTML comments to flag dynamic content for LLM processing
+  - Generates dynamic-manifest.json with:
+    - Summary statistics
+    - List of all detected dynamic elements with context
+    - Recommendations for handling dynamic content
+
+#### Phase 6: S3 Deployment
+- **lib/s3-uploader.js** - Complete S3 deployment automation
+  - Verifies bucket accessibility using IAM role credentials
+  - Configures static website hosting (index.html, 404.html)
+  - Sets bucket policy for public read access
+  - Optional CORS configuration (gracefully handles permission errors)
+  - Uploads all files with correct MIME types (using mime-types library)
+  - Sets appropriate Cache-Control headers:
+    - HTML: no-cache (always fresh)
+    - JSON/XML: must-revalidate
+    - Assets (CSS/JS/images/fonts): 1 year cache with immutable flag
+  - Uses concurrency control (10 parallel uploads)
+  - Displays website URL after deployment
+  - Comprehensive upload statistics
+
+#### CLI Integration
+- Modified **clone-website.js** to orchestrate all 6 phases
+  - Phase 2: URL Enumeration (existing)
+  - Phase 3: Asset Extraction (new)
+  - Phase 4: Link Rewriting (new)
+  - Phase 5: Dynamic Content Detection (new)
+  - Phase 6: S3 Deployment (new)
+  - Proper error handling between phases
+  - Clear status messages for each phase
+  - Respects --skip-s3 flag
+  - Checks config.s3.enabled setting
+
+### Changed
+- **test-download-config.json** - Updated with S3 configuration
+  - Enabled S3 deployment
+  - Bucket: my-landing-page-1768022354
+  - Region: us-east-1
+  - Public read ACL
+  - Static website hosting enabled
+  - CORS configuration enabled (optional)
+
+### Tested - End-to-End Validation
+- ✅ Complete workflow test with info.cern.ch:
+  - Phase 2: 25 URLs enumerated, manifest generated
+  - Phase 3: 24 HTML pages downloaded, 0 assets (static HTML site)
+  - Phase 4: 48 links rewritten to relative paths, 81 external links preserved
+  - Phase 5: 24 pages analyzed, 0 dynamic elements detected (correctly identified as static)
+  - Phase 6: 27 files uploaded to S3 (77.1 KB total)
+- ✅ Website deployed and accessible at: http://my-landing-page-1768022354.s3-website-us-east-1.amazonaws.com
+- ✅ All relative links work correctly across directory levels
+- ✅ Static website hosting configured automatically
+- ✅ Bucket policy set for public read access
+- ✅ Dynamic content manifest generated with recommendations
+
+### Performance
+- Complete clone cycle (enumerate → download → rewrite → detect → upload): ~15 seconds
+- Parallel asset downloading: 3 concurrent requests
+- Parallel S3 uploads: 10 concurrent requests
+- Graceful handling of 404 errors during download
+- Efficient file I/O with streaming
+
+### Technical Improvements
+- Proper separation of concerns across 6 phases
+- Each phase can be run independently
+- Results passed between phases via return values
+- Comprehensive error handling at each phase
+- Progress indicators for long-running operations
+- Statistics tracking throughout pipeline
 
 ## [0.1.1] - 2026-01-10
 

@@ -1,17 +1,18 @@
 # Website Cloner
 
-A two-phase website cloning tool that discovers URLs via BFS, then downloads and deploys to S3.
+A complete website cloning tool with 6 phases: enumerate URLs, download assets, rewrite links, detect dynamic content, and deploy to S3.
 
-## Features
+## Features ✅ All Phases Complete
 
 - **Phase 2 (Enumeration)**: Breadth-First Search to discover all URLs without downloading
-- **Phase 3 (Clone)**: Download HTML, CSS, JS, images, fonts from discovered URLs
-- **Link Rewriting**: Convert absolute URLs to relative paths for static hosting
-- **Dynamic Content Detection**: Mark API calls, forms, WebSockets with data attributes for LLM processing
-- **S3 Deployment**: Upload to S3 with static website hosting configuration
+- **Phase 3 (Asset Extraction)**: Download HTML, CSS, JS, images, fonts from discovered URLs
+- **Phase 4 (Link Rewriting)**: Convert absolute URLs to relative paths for static hosting
+- **Phase 5 (Dynamic Detection)**: Mark API calls, forms, WebSockets with data attributes for LLM processing
+- **Phase 6 (S3 Deployment)**: Upload to S3 with static website hosting configuration
 - **Rate Limiting**: Respect target servers with configurable request rates
 - **Robots.txt**: Honor robots.txt rules
-- **Progress Tracking**: Real-time progress updates during crawling
+- **Progress Tracking**: Real-time progress updates during all phases
+- **IAM Role Support**: Uses EC2 instance IAM roles for AWS credentials
 
 ## Installation
 
@@ -76,13 +77,28 @@ cat output/manifest.json
 
 Check the total URLs, max depth, and URL list before proceeding.
 
-### 4. Run Download Phase (Phase 3)
+### 4. Run Download and Deploy (Phases 3-6)
 
-**Note: Phase 3 is not yet implemented.** Coming soon!
+Download assets, rewrite links, detect dynamic content, and deploy to S3:
 
 ```bash
 node clone-website.js --config=mysite-config.json --download
 ```
+
+This will:
+- **Phase 3**: Download all HTML pages and assets (CSS, JS, images)
+- **Phase 4**: Rewrite all URLs to relative paths for static hosting
+- **Phase 5**: Detect and mark dynamic content (API calls, forms, WebSockets)
+- **Phase 6**: Upload to S3 with static website hosting configured
+
+### 5. Access Your Deployed Site
+
+After deployment completes, your site will be live at:
+```
+http://[your-bucket-name].s3-website-[region].amazonaws.com
+```
+
+Example: `http://my-landing-page-1768022354.s3-website-us-east-1.amazonaws.com`
 
 ## Configuration
 
@@ -90,12 +106,141 @@ See `config.example.json` for full configuration schema.
 
 ### Key Settings
 
+#### Crawling Configuration
 - `target.url`: Starting URL to clone
 - `crawling.maxDepth`: Maximum BFS depth (levels from seed URL)
 - `crawling.maxPages`: Maximum number of pages to crawl
+- `crawling.sameDomainOnly`: Restrict to same domain (default: true)
 - `crawling.ignorePatterns`: Glob patterns to exclude (e.g., `**/logout`, `**/admin/**`)
 - `rateLimit.requestsPerSecond`: Rate limiting to respect target server
-- `s3.bucket`: S3 bucket name for deployment
+
+#### S3 Deployment Configuration
+- `s3.enabled`: Enable/disable S3 upload (default: false)
+- `s3.bucket`: S3 bucket name (e.g., "my-landing-page-1768022354")
+- `s3.region`: AWS region (e.g., "us-east-1")
+- `s3.prefix`: Optional S3 key prefix (folder path)
+- `s3.acl`: Access control ("public-read" for public websites)
+- `s3.configureWebsiteHosting`: Auto-configure static website hosting (default: true)
+- `s3.configureCors`: Configure CORS (optional, requires s3:PutBucketCors permission)
+- `s3.indexDocument`: Index document (default: "index.html")
+- `s3.errorDocument`: Error document (default: "404.html")
+
+#### Dynamic Content Detection
+- `dynamic.detectAPIEndpoints`: Detect fetch/XHR API calls
+- `dynamic.detectFormSubmissions`: Detect forms requiring backend
+- `dynamic.detectWebSockets`: Detect WebSocket connections
+- `dynamic.markerAttribute`: Data attribute for marking (default: "data-marker")
+- `dynamic.markerValue`: Marker value (default: "LLM_FIX_REQUIRED")
+
+### AWS IAM Requirements
+
+The tool uses EC2 IAM role credentials. Required S3 permissions:
+
+**Option 1: Specific Bucket (More Secure)**
+
+Replace `my-landing-page-1768022354` with your bucket name:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3BucketManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetBucketWebsite",
+        "s3:PutBucketWebsite",
+        "s3:PutBucketCors",
+        "s3:GetBucketCors"
+      ],
+      "Resource": "arn:aws:s3:::my-landing-page-1768022354"
+    },
+    {
+      "Sid": "S3ObjectManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::my-landing-page-1768022354/*"
+    },
+    {
+      "Sid": "S3PublicAccessManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPublicAccessBlock"
+      ],
+      "Resource": "arn:aws:s3:::my-landing-page-1768022354"
+    },
+    {
+      "Sid": "S3ListBuckets",
+      "Effect": "Allow",
+      "Action": "s3:ListAllMyBuckets",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Option 2: All Buckets (More Flexible)**
+
+Use wildcards to work with any bucket:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3BucketManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetBucketWebsite",
+        "s3:PutBucketWebsite",
+        "s3:PutBucketCors",
+        "s3:GetBucketCors",
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3ObjectManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::*/*"
+    },
+    {
+      "Sid": "S3PublicAccessManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPublicAccessBlock"
+      ],
+      "Resource": "arn:aws:s3:::*"
+    }
+  ]
+}
+```
+
+**Note:**
+- `s3:PutBucketCors` is optional. If missing, CORS configuration is skipped with a warning.
+- Option 1 is more secure but requires updating the policy for each new bucket.
+- Option 2 is more flexible for working with multiple buckets.
 
 ## CLI Options
 
@@ -132,11 +277,38 @@ node clone-website.js --config=config.json --enumerate -v
 
 ### Phase 3: Asset Extraction (Clone Stage)
 
-- Reads `manifest.json`
-- Downloads HTML, CSS, JS, images, fonts for each URL
-- Rewrites links for static hosting
-- Marks dynamic content with `data-marker="LLM_FIX_REQUIRED"`
-- Uploads to S3 with correct Content-Type headers
+- Reads `manifest.json` from Phase 2
+- Downloads all HTML pages with concurrency control
+- Extracts and downloads assets: CSS, JS, images (including srcset), fonts
+- Handles retries for failed downloads
+- Organized directory structure (assets/css, assets/js, assets/images)
+
+### Phase 4: Link Rewriting
+
+- Rewrites all href/src attributes to relative paths
+- Rewrites CSS url() references
+- Preserves external links (different domains)
+- Preserves special protocols (data:, mailto:, tel:)
+- Calculates correct relative paths across directory levels
+
+### Phase 5: Dynamic Content Detection
+
+- Analyzes HTML for forms requiring backend (POST, file uploads)
+- Detects API calls in JavaScript (fetch, XHR, axios)
+- Detects WebSocket connections
+- Marks elements with `data-marker="LLM_FIX_REQUIRED"`
+- Adds HTML comments explaining what needs fixing
+- Generates `dynamic-manifest.json` with recommendations
+
+### Phase 6: S3 Deployment
+
+- Verifies bucket access (uses IAM role credentials)
+- Configures static website hosting
+- Sets bucket policy for public read access
+- Optional CORS configuration
+- Uploads all files with correct MIME types
+- Sets Cache-Control headers (HTML: no-cache, assets: 1 year)
+- Displays website URL after deployment
 
 ## Output Files
 
