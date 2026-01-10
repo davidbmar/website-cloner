@@ -9,6 +9,7 @@ import Enumerator from './lib/enumerator.js';
 import Downloader from './lib/downloader.js';
 import LinkRewriter from './lib/link-rewriter.js';
 import DynamicDetector from './lib/dynamic-detector.js';
+import S3Uploader from './lib/s3-uploader.js';
 
 const program = new Command();
 
@@ -131,13 +132,25 @@ async function main() {
         downloadResult.assets
       );
 
-      // TODO: S3 upload (Phase 6)
+      // Phase 6: S3 upload
       if (!options.skipS3 && config.s3.enabled) {
-        logger.warn('S3 upload not yet implemented');
+        logger.info('');
+        const s3Uploader = new S3Uploader(config, logger);
+        await s3Uploader.upload();
+      } else if (!config.s3.enabled) {
+        logger.info('');
+        logger.info('S3 upload disabled in configuration');
+      } else {
+        logger.info('');
+        logger.info('S3 upload skipped (--skip-s3 flag)');
       }
 
-      console.log('\n' + chalk.green.bold('✓ Download Complete!'));
-      console.log('Next: Implement link rewriting and dynamic detection');
+      console.log('\n' + chalk.green.bold('✓ Clone Complete!'));
+      if (config.s3.enabled && !options.skipS3) {
+        console.log('Website has been deployed to S3!');
+      } else {
+        console.log('Files are ready for deployment in: ' + config.output.localDirectory);
+      }
     }
 
     console.log('\n' + chalk.green.bold('✓ Process Complete!\n'));

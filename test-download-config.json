@@ -57,7 +57,15 @@
     "cleanBeforeRun": false
   },
   "s3": {
-    "enabled": false
+    "enabled": true,
+    "bucket": "my-landing-page-1768022354",
+    "region": "us-east-1",
+    "prefix": "",
+    "acl": "public-read",
+    "configureWebsiteHosting": true,
+    "configureCors": true,
+    "indexDocument": "index.html",
+    "errorDocument": "404.html"
   },
   "logging": {
     "level": "info",
