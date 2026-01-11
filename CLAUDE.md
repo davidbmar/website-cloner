@@ -190,7 +190,11 @@ Configuration files use JSON format. See `config.example.json` for full schema.
 
 ## AWS IAM Requirements
 
-The tool uses EC2 IAM role credentials (no hardcoded keys). Required S3 permissions:
+**IMPORTANT: This tool uses EC2 IAM role credentials exclusively. NEVER use individual AWS access keys.**
+
+The EC2 instance must have an IAM role (e.g., `ssh-whitelist-role`) attached with the following permissions:
+
+### Required S3 Permissions
 
 **Bucket-level**:
 - s3:CreateBucket (if bucket doesn't exist)

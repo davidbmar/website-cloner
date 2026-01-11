@@ -1,0 +1,230 @@
+
+═══════════════════════════════════════════════════════════════════════════════
+                    AUTHENTICATION GATEWAY ARCHITECTURE
+                         All on Same Server: 52.43.35.1
+═══════════════════════════════════════════════════════════════════════════════
+
+
+                              INTERNET
+                                 │
+                                 │ http://52.43.35.1/
+                                 │
+                                 ▼
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                        EC2 INSTANCE: 52.43.35.1                            ║
+║                                                                             ║
+║  ┌─────────────────────────────────────────────────────────────────────┐   ║
+║  │                    NGINX (Port 80) - PUBLIC                         │   ║
+║  │  ┌───────────────────────────────────────────────────────────────┐  │   ║
+║  │  │  Request comes in from internet                               │  │   ║
+║  │  │  Check: Does user have auth cookie?                           │  │   ║
+║  │  └───────────────────────────────────────────────────────────────┘  │   ║
+║  └────────┬────────────────────────────────┬────────────────────────────┘   ║
+║           │                                │                                ║
+║           │ If NO cookie                   │ If YES cookie                  ║
+║           │                                │                                ║
+║           ▼                                ▼                                ║
+║   ┌──────────────┐           ┌────────────────────────────────────┐        ║
+║   │ Redirect to  │           │ Verify with oauth2-proxy           │        ║
+║   │ Cognito      │           │ (Internal call to localhost:4180)  │        ║
+║   │ Login        │           └────────────┬───────────────────────┘        ║
+║   └──────────────┘                        │                                ║
+║                                           ▼                                ║
+║  ┌─────────────────────────────────────────────────────────────────────┐   ║
+║  │              oauth2-proxy (Port 4180) - INTERNAL ONLY              │   ║
+║  │  ┌───────────────────────────────────────────────────────────────┐ │   ║
+║  │  │  • Validates JWT token from cookie                           │ │   ║
+║  │  │  • Talks to Cognito (external AWS service)                   │ │   ║
+║  │  │  • Returns: "Valid! User is john@example.com"                │ │   ║
+║  │  └───────────────────────────────────────────────────────────────┘ │   ║
+║  └────────────────────────────────┬────────────────────────────────────┘   ║
+║                                   │                                        ║
+║                                   │ User info returned to Nginx            ║
+║                                   ▼                                        ║
+║  ┌─────────────────────────────────────────────────────────────────────┐   ║
+║  │                    NGINX adds headers:                              │   ║
+║  │                    X-User-Email: john@example.com                   │   ║
+║  └───────────┬──────────────────────────────────┬──────────────────────┘   ║
+║              │                                  │                          ║
+║              │ Route: /                         │ Route: /cloner/*         ║
+║              ▼                                  ▼                          ║
+║  ┌─────────────────────────┐      ┌──────────────────────────────────┐    ║
+║  │  Landing Page           │      │  Website Cloner                  │    ║
+║  │  (Port 8080)            │      │  (Port 3000)                     │    ║
+║  │  INTERNAL ONLY          │      │  INTERNAL ONLY                   │    ║
+║  │                         │      │                                  │    ║
+║  │  app.get('/', (req) => {│      │  app.get('/portfolio', (req) => {│    ║
+║  │    const email =        │      │    const email =                 │    ║
+║  │      req.headers[       │      │      req.headers[                │    ║
+║  │        'x-user-email']; │      │        'x-user-email'];          │    ║
+║  │                         │      │                                  │    ║
+║  │    // That's it!        │      │    // No auth code!              │    ║
+║  │    // No Cognito code!  │      │    // Just read header!          │    ║
+║  │  });                    │      │  });                             │    ║
+║  └─────────────────────────┘      └──────────────────────────────────┘    ║
+║                                                                             ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+                                   │
+                                   │ (External call only from oauth2-proxy)
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │   AWS Cognito (External)    │
+                    │   - User Pool               │
+                    │   - JWT token validation    │
+                    └─────────────────────────────┘
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              USER LOGIN FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+  User                 Nginx:80           oauth2-proxy:4180      Cognito
+   │                      │                      │                   │
+   │  Visit /cloner/      │                      │                   │
+   ├──────────────────────>                      │                   │
+   │                      │                      │                   │
+   │                      │  No cookie?          │                   │
+   │                      │  auth_request        │                   │
+   │                      ├──────────────────────>                   │
+   │                      │                      │                   │
+   │                      │  ← 401 Unauthorized  │                   │
+   │                      <──────────────────────┤                   │
+   │                      │                      │                   │
+   │  ← Redirect to       │                      │                   │
+   │    Cognito login     │                      │                   │
+   <──────────────────────┤                      │                   │
+   │                      │                      │                   │
+   │  Visit Cognito       │                      │                   │
+   │  login page          │                      │                   │
+   ├──────────────────────┼──────────────────────┼──────────────────>│
+   │                      │                      │                   │
+   │  ← Login form        │                      │                   │
+   <──────────────────────┼──────────────────────┼───────────────────┤
+   │                      │                      │                   │
+   │  Submit credentials  │                      │                   │
+   ├──────────────────────┼──────────────────────┼──────────────────>│
+   │                      │                      │                   │
+   │  ← Redirect with     │                      │                   │
+   │    auth code         │                      │                   │
+   <──────────────────────┼──────────────────────┼───────────────────┤
+   │                      │                      │                   │
+   │  Visit /callback     │                      │                   │
+   ├──────────────────────>                      │                   │
+   │                      │                      │                   │
+   │                      │  Exchange code       │                   │
+   │                      │  for tokens          │                   │
+   │                      ├──────────────────────┼──────────────────>│
+   │                      │                      │                   │
+   │                      │  ← JWT tokens        │                   │
+   │                      │    (id_token, etc)   │                   │
+   │                      <──────────────────────┼───────────────────┤
+   │                      │                      │                   │
+   │  ← Set cookie        │                      │                   │
+   │    Redirect to       │                      │                   │
+   │    /cloner/          │                      │                   │
+   <──────────────────────┤                      │                   │
+   │                      │                      │                   │
+   │  Visit /cloner/      │                      │                   │
+   │  (with cookie)       │                      │                   │
+   ├──────────────────────>                      │                   │
+   │                      │                      │                   │
+   │                      │  auth_request        │                   │
+   │                      │  (check cookie)      │                   │
+   │                      ├──────────────────────>                   │
+   │                      │                      │                   │
+   │                      │  ← 200 OK            │                   │
+   │                      │    X-User-Email:     │                   │
+   │                      │    john@example.com  │                   │
+   │                      <──────────────────────┤                   │
+   │                      │                      │                   │
+   │                      │  Proxy to            │                   │
+   │                      │  localhost:3000      │                   │
+   │                      │  + add headers       │                   │
+   │                      │                      │                   │
+   │  ← Page content      │                      │                   │
+   <──────────────────────┤                      │                   │
+   │                      │                      │                   │
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                            PORT ALLOCATION
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────┬──────────────────┬────────────┬───────────────────────────────┐
+│  Port   │     Service      │   Access   │          Purpose              │
+├─────────┼──────────────────┼────────────┼───────────────────────────────┤
+│   80    │  Nginx           │  PUBLIC    │  Entry point, routing, auth   │
+├─────────┼──────────────────┼────────────┼───────────────────────────────┤
+│  4180   │  oauth2-proxy    │  INTERNAL  │  Cognito OAuth handler        │
+├─────────┼──────────────────┼────────────┼───────────────────────────────┤
+│  8080   │  Landing page    │  INTERNAL  │  Main website                 │
+├─────────┼──────────────────┼────────────┼───────────────────────────────┤
+│  3000   │  Website Cloner  │  INTERNAL  │  Clone management UI          │
+└─────────┴──────────────────┴────────────┴───────────────────────────────┘
+
+PUBLIC = Accessible from internet
+INTERNAL = Only accessible via localhost (127.0.0.1)
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         SIMPLIFIED CODE EXAMPLE
+═══════════════════════════════════════════════════════════════════════════════
+
+Before (Complex):
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ import CognitoAuth from './lib/cognito-auth.js';                           │
+│ import session from 'express-session';                                     │
+│                                                                             │
+│ // 50+ lines of Cognito setup                                              │
+│ const cognitoAuth = new CognitoAuth({ ... });                              │
+│                                                                             │
+│ // Session management                                                      │
+│ app.use(session({ ... }));                                                 │
+│                                                                             │
+│ // Login route                                                             │
+│ app.get('/login', (req, res) => { ... });                                  │
+│                                                                             │
+│ // Callback route                                                          │
+│ app.get('/callback', async (req, res) => { ... });                         │
+│                                                                             │
+│ // Protected route                                                         │
+│ app.get('/portfolio', cognitoAuth.requireAuth(), (req, res) => {           │
+│   // Complex auth middleware                                               │
+│ });                                                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+After (Simple):
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ import express from 'express';                                             │
+│ const app = express();                                                     │
+│                                                                             │
+│ // That's all the imports! No Cognito code!                                │
+│                                                                             │
+│ app.get('/portfolio', (req, res) => {                                      │
+│   const email = req.headers['x-user-email'];                               │
+│   // If this code runs, user is already authenticated by Nginx!           │
+│   res.send(`Welcome ${email}`);                                            │
+│ });                                                                         │
+│                                                                             │
+│ app.listen(3000);                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              KEY INSIGHT
+═══════════════════════════════════════════════════════════════════════════════
+
+        All authentication logic lives in ONE PLACE: Nginx + oauth2-proxy
+
+        Your backend apps NEVER need to know about Cognito.
+
+        They just read a header. That's it.
+
+        Conceptually simple. Easier to understand. Easier to maintain.
+
+═══════════════════════════════════════════════════════════════════════════════
