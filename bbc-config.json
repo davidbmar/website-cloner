@@ -1,0 +1,64 @@
+{
+  "target": {
+    "url": "https://www.bbc.com",
+    "description": "BBC.com news site clone"
+  },
+  "crawling": {
+    "maxDepth": 2,
+    "maxPages": 150,
+    "sameDomainOnly": true,
+    "respectRobotsTxt": true,
+    "includeSubdomains": false,
+    "ignorePatterns": [
+      "**/logout",
+      "**/signout",
+      "**/login",
+      "**/_next/data/**"
+    ],
+    "allowPatterns": []
+  },
+  "network": {
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "concurrency": 2,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  },
+  "assets": {
+    "downloadImages": true,
+    "downloadCSS": true,
+    "downloadJS": true,
+    "downloadFonts": true,
+    "downloadVideos": false,
+    "maxFileSize": 10485760,
+    "imageFormats": ["jpg", "jpeg", "png", "gif", "svg", "webp", "ico"],
+    "cssFormats": ["css"],
+    "jsFormats": ["js", "mjs"],
+    "fontFormats": ["woff", "woff2", "ttf", "otf", "eot"],
+    "videoFormats": ["mp4", "webm", "ogg"]
+  },
+  "dynamic": {
+    "detectAPIEndpoints": true,
+    "detectFormSubmissions": true,
+    "detectWebSockets": true,
+    "detectEmptyDivs": true,
+    "markerAttribute": "data-marker",
+    "markerValue": "LLM_FIX_REQUIRED",
+    "generateManifest": true
+  },
+  "rateLimit": {
+    "enabled": true,
+    "requestsPerSecond": 0.5
+  },
+  "output": {
+    "localDirectory": "./output"
+  },
+  "s3": {
+    "enabled": true,
+    "bucket": "my-landing-page-1768022354",
+    "region": "us-east-1",
+    "prefix": "bbc-com",
+    "configureWebsiteHosting": true,
+    "errorDocument": "404.html"
+  }
+}

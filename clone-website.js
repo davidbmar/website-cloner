@@ -10,6 +10,8 @@ import Downloader from './lib/downloader.js';
 import LinkRewriter from './lib/link-rewriter.js';
 import DynamicDetector from './lib/dynamic-detector.js';
 import S3Uploader from './lib/s3-uploader.js';
+import NotFoundPageGenerator from './lib/404-page-generator.js';
+import IndexPageGenerator from './lib/index-page-generator.js';
 
 const program = new Command();
 
@@ -47,6 +49,46 @@ async function main() {
 
   // Load configuration
   const config = loadConfig(options.config);
+
+  // Ensure required config sections exist with defaults
+  if (!config.logging) {
+    config.logging = {
+      level: 'info',
+      logToFile: true,
+      logDirectory: './logs',
+      progressUpdates: true
+    };
+  }
+
+  if (!config.output) {
+    config.output = {
+      localDirectory: './output',
+      preserveDirectoryStructure: true,
+      cleanBeforeRun: false
+    };
+  }
+
+  if (!config.dynamic) {
+    config.dynamic = {
+      detectAPIEndpoints: true,
+      detectFormSubmissions: true,
+      detectWebSockets: true,
+      detectEmptyDivs: true,
+      markerAttribute: 'data-marker',
+      markerValue: 'LLM_FIX_REQUIRED',
+      generateManifest: true
+    };
+  }
+
+  // Ensure assets config has the expected structure
+  if (config.assets && config.assets.download) {
+    // Convert from Web UI format to expected format
+    config.assets.downloadImages = config.assets.download.images !== false;
+    config.assets.downloadCSS = config.assets.download.css !== false;
+    config.assets.downloadJS = config.assets.download.js !== false;
+    config.assets.downloadFonts = config.assets.download.fonts !== false;
+    config.assets.downloadVideos = config.assets.download.videos === true;
+  }
 
   // Override logging level if verbose
   if (options.verbose) {
@@ -115,6 +157,19 @@ async function main() {
       const downloader = new Downloader(config, logger);
       const downloadResult = await downloader.downloadFromManifest(manifestPath);
 
+      // Generate 404 page (Phase 3.5)
+      logger.info('');
+      logger.section('Generating 404 Error Page');
+      const notFoundGenerator = new NotFoundPageGenerator(config, logger);
+      const stats = {
+        pagesDownloaded: downloadResult.pages.size,
+        assetsDownloaded: downloadResult.assets.size,
+        totalSize: [...downloadResult.assets.values()].reduce((sum, asset) => sum + (asset.size || 0), 0)
+      };
+      const domain = new URL(config.target.url).hostname; // Keep www. prefix
+      const siteOutputDir = path.join(config.output.localDirectory, domain);
+      notFoundGenerator.generate(stats, siteOutputDir);
+
       // Phase 4: Link rewriting
       logger.info('');
       const linkRewriter = new LinkRewriter(config, logger);
@@ -131,6 +186,11 @@ async function main() {
         downloadResult.pages,
         downloadResult.assets
       );
+
+      // Phase 5.5: Generate index page listing all cloned sites
+      logger.info('');
+      const indexPageGenerator = new IndexPageGenerator(config, logger);
+      await indexPageGenerator.generate(config.output.localDirectory);
 
       // Phase 6: S3 upload
       if (!options.skipS3 && config.s3.enabled) {
