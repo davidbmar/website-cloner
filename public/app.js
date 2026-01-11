@@ -1,5 +1,27 @@
+// Global config defaults (loaded from server)
+let configDefaults = {
+    s3Bucket: 'my-landing-page',
+    s3Region: 'us-east-1',
+    maxDepth: 5,
+    maxPages: 500,
+    ignorePatterns: []
+};
+
 // Templates for quick start
 const templates = {
+    capsule: {
+        targetUrl: 'https://capsule.com',
+        description: 'Capsule.com → S3 static clone',
+        maxDepth: 2,
+        maxPages: 100,
+        sameDomainOnly: true,
+        respectRobotsTxt: true,
+        ignorePatterns: '**/login\n**/signup\n**/app/**\n**/dashboard/**',
+        s3Bucket: null, // Will use configDefaults
+        s3Region: null, // Will use configDefaults
+        s3Prefix: null, // Will auto-generate to 'capsule-com'
+        requestsPerSecond: 2
+    },
     localhost: {
         targetUrl: 'http://localhost:8080',
         description: 'Local development site',
@@ -8,9 +30,9 @@ const templates = {
         sameDomainOnly: true,
         respectRobotsTxt: false,
         ignorePatterns: '',
-        s3Bucket: 'my-local-site-' + Date.now(),
-        s3Region: 'us-east-1',
-        s3Prefix: '',
+        s3Bucket: null, // Will use configDefaults
+        s3Region: null, // Will use configDefaults
+        s3Prefix: null, // Will auto-generate
         requestsPerSecond: 10
     },
     otter: {
@@ -21,25 +43,85 @@ const templates = {
         sameDomainOnly: true,
         respectRobotsTxt: true,
         ignorePatterns: '**/logout\n**/admin/**\n**/login\n**/signup',
-        s3Bucket: 'otter-clone-' + Date.now(),
-        s3Region: 'us-east-1',
-        s3Prefix: 'otter',
+        s3Bucket: null, // Will use configDefaults
+        s3Region: null, // Will use configDefaults
+        s3Prefix: null, // Will auto-generate
+        requestsPerSecond: 2
+    },
+    example: {
+        targetUrl: 'https://example.com',
+        description: 'Simple test site (for testing)',
+        maxDepth: 2,
+        maxPages: 50,
+        sameDomainOnly: true,
+        respectRobotsTxt: true,
+        ignorePatterns: '',
+        s3Bucket: null, // Will use configDefaults
+        s3Region: null, // Will use configDefaults
+        s3Prefix: null, // Will auto-generate
+        requestsPerSecond: 2
+    },
+    cnn: {
+        targetUrl: 'https://www.cnn.com',
+        description: 'CNN News (may have rate limits)',
+        maxDepth: 2,
+        maxPages: 100,
+        sameDomainOnly: true,
+        respectRobotsTxt: true,
+        ignorePatterns: '**/video/**\n**/videos/**\n**/live-tv/**',
+        s3Bucket: null,
+        s3Region: null,
+        s3Prefix: null,
+        requestsPerSecond: 1
+    },
+    slashdot: {
+        targetUrl: 'https://slashdot.org',
+        description: 'Slashdot Tech News',
+        maxDepth: 2,
+        maxPages: 150,
+        sameDomainOnly: true,
+        respectRobotsTxt: true,
+        ignorePatterns: '**/archive/**\n**/search/**',
+        s3Bucket: null,
+        s3Region: null,
+        s3Prefix: null,
         requestsPerSecond: 2
     },
     custom: {
         targetUrl: '',
         description: '',
-        maxDepth: 5,
-        maxPages: 500,
+        maxDepth: null, // Will use configDefaults
+        maxPages: null, // Will use configDefaults
         sameDomainOnly: true,
         respectRobotsTxt: true,
-        ignorePatterns: '**/logout\n**/admin/**\n**/login',
-        s3Bucket: '',
-        s3Region: 'us-east-1',
+        ignorePatterns: null, // Will use configDefaults
+        s3Bucket: null, // Will use configDefaults
+        s3Region: null, // Will use configDefaults
         s3Prefix: '',
         requestsPerSecond: 2
     }
 };
+
+// Convert URL to valid S3 prefix
+function urlToPrefix(url) {
+    if (!url) return '';
+
+    try {
+        const urlObj = new URL(url);
+        // Get domain without www
+        let domain = urlObj.hostname.replace(/^www\./, '');
+
+        // Convert to valid S3 prefix (lowercase, replace dots with hyphens)
+        let prefix = domain.replace(/\./g, '-').toLowerCase();
+
+        // Remove trailing hyphen if any
+        prefix = prefix.replace(/-+$/, '');
+
+        return prefix;
+    } catch {
+        return '';
+    }
+}
 
 // Load template into form
 function loadTemplate(templateName) {
@@ -48,14 +130,23 @@ function loadTemplate(templateName) {
 
     document.getElementById('targetUrl').value = template.targetUrl;
     document.getElementById('description').value = template.description;
-    document.getElementById('maxDepth').value = template.maxDepth;
-    document.getElementById('maxPages').value = template.maxPages;
+    document.getElementById('maxDepth').value = template.maxDepth ?? configDefaults.maxDepth;
+    document.getElementById('maxPages').value = template.maxPages ?? configDefaults.maxPages;
     document.getElementById('sameDomainOnly').checked = template.sameDomainOnly;
     document.getElementById('respectRobotsTxt').checked = template.respectRobotsTxt;
-    document.getElementById('ignorePatterns').value = template.ignorePatterns;
-    document.getElementById('s3Bucket').value = template.s3Bucket;
-    document.getElementById('s3Region').value = template.s3Region;
-    document.getElementById('s3Prefix').value = template.s3Prefix;
+
+    // Use config defaults for ignore patterns if not specified
+    const ignorePatterns = template.ignorePatterns ?? configDefaults.ignorePatterns.join('\n');
+    document.getElementById('ignorePatterns').value = ignorePatterns;
+
+    // Use config defaults for S3 bucket and region
+    document.getElementById('s3Bucket').value = template.s3Bucket ?? configDefaults.s3Bucket;
+    document.getElementById('s3Region').value = template.s3Region ?? configDefaults.s3Region;
+
+    // Auto-generate S3 prefix from URL if not specified
+    const autoPrefix = template.s3Prefix ?? urlToPrefix(template.targetUrl);
+    document.getElementById('s3Prefix').value = autoPrefix;
+
     document.getElementById('requestsPerSecond').value = template.requestsPerSecond;
 
     // Highlight the selected template button
@@ -89,9 +180,20 @@ function getConfigFromForm() {
         .map(p => p.trim())
         .filter(p => p.length > 0);
 
+    // Get and validate URL - auto-add https:// if missing
+    let targetUrl = document.getElementById('targetUrl').value.trim();
+    if (targetUrl && !targetUrl.match(/^https?:\/\//i)) {
+        // Default to https:// (more common and handles redirects better)
+        targetUrl = 'https://' + targetUrl;
+        console.log('Auto-added https:// to URL:', targetUrl);
+    } else if (targetUrl && targetUrl.match(/^http:\/\//i)) {
+        // Warn about http:// as it often redirects to https://
+        console.warn('Using http:// - if clone fails, try https:// instead');
+    }
+
     return {
         target: {
-            url: document.getElementById('targetUrl').value,
+            url: targetUrl,
             description: document.getElementById('description').value
         },
         crawling: {
@@ -253,6 +355,11 @@ function showResults(data) {
         html += `<p><strong>🎉 Clone Complete!</strong></p>`;
         html += `<p>Your website is now live at:</p>`;
         html += `<p><a href="${data.websiteUrl}" target="_blank">${data.websiteUrl}</a></p>`;
+
+        if (data.s3Prefix) {
+            html += `<p><em>💡 Tip: Your site is stored in the <code>${data.s3Prefix}/</code> subdirectory. The URL above includes this path.</em></p>`;
+        }
+
         html += `<p><em>Note: If you see old content, do a hard refresh (Ctrl+Shift+R or Cmd+Shift+R)</em></p>`;
     }
 
@@ -272,6 +379,14 @@ async function startEnumeration() {
 
     if (!config.target.url) {
         alert('Please enter a target URL');
+        return;
+    }
+
+    // Validate URL
+    try {
+        new URL(config.target.url);
+    } catch (e) {
+        alert('Invalid URL. Please enter a valid URL like https://example.com');
         return;
     }
 
@@ -396,21 +511,33 @@ async function startFull() {
         return;
     }
 
+    // Validate URL
+    try {
+        new URL(config.target.url);
+    } catch (e) {
+        alert('Invalid URL. Please enter a valid URL like https://example.com');
+        return;
+    }
+
     showProgress();
     updateProgress(5, 'Starting full clone...');
     addLog('Starting full clone (enumerate + download)...', 'info');
 
     try {
+        console.log('Starting full clone request...');
         const response = await fetch('/api/full', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
         });
 
+        console.log('Response received:', response.status, response.statusText);
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
+        console.log('Starting to read response stream...');
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
@@ -426,7 +553,9 @@ async function startFull() {
                     try {
                         const data = JSON.parse(line.slice(6));
 
-                        if (data.type === 'log') {
+                        if (data.type === 'connected') {
+                            console.log('SSE connection established:', data.message);
+                        } else if (data.type === 'log') {
                             addLog(data.message, data.level || 'info');
                         } else if (data.type === 'progress') {
                             updateProgress(data.percent, data.message);
@@ -439,7 +568,7 @@ async function startFull() {
                             showResults({ error: data.message });
                         }
                     } catch (e) {
-                        console.error('Failed to parse SSE data:', e);
+                        console.error('Failed to parse SSE data:', e, 'Line:', line);
                     }
                 }
             }
@@ -450,8 +579,257 @@ async function startFull() {
     }
 }
 
-// Initialize on page load
+// Load config defaults from server
+async function loadConfigDefaults() {
+    try {
+        const response = await fetch('/api/config-defaults');
+        const defaults = await response.json();
+
+        configDefaults = {
+            s3Bucket: defaults.s3Bucket,
+            s3Region: defaults.s3Region,
+            maxDepth: defaults.maxDepth,
+            maxPages: defaults.maxPages,
+            ignorePatterns: defaults.ignorePatterns || []
+        };
+
+        console.log('Loaded config defaults:', configDefaults);
+    } catch (error) {
+        console.error('Failed to load config defaults:', error);
+        // Use hardcoded defaults as fallback
+    }
+}
+
+// Auto-update S3 prefix when target URL changes
 document.addEventListener('DOMContentLoaded', () => {
-    // Load default template
-    loadTemplate('custom');
+    // Load config defaults first
+    loadConfigDefaults().then(() => {
+        // Load default template
+        loadTemplate('custom');
+    });
+
+    // Auto-update S3 prefix when URL changes
+    const targetUrlInput = document.getElementById('targetUrl');
+    const s3PrefixInput = document.getElementById('s3Prefix');
+
+    targetUrlInput.addEventListener('blur', () => {
+        const url = targetUrlInput.value;
+        // Only auto-fill if prefix is empty
+        if (!s3PrefixInput.value && url) {
+            s3PrefixInput.value = urlToPrefix(url);
+        }
+    });
 });
+
+// Toggle rationale side panel
+function toggleRationale() {
+    const panel = document.getElementById('rationalePanel');
+    panel.classList.toggle('open');
+}
+
+// Close rationale panel when clicking outside (optional enhancement)
+document.addEventListener('click', (event) => {
+    const panel = document.getElementById('rationalePanel');
+    const toggle = document.querySelector('.rationale-toggle');
+    const closeBtn = document.querySelector('.close-rationale');
+
+    // If panel is open and click is outside panel and not on toggle button
+    if (panel && panel.classList.contains('open')) {
+        if (!panel.contains(event.target) && event.target !== toggle && !toggle.contains(event.target)) {
+            // Only close if clicked outside, not if clicking close button (it handles itself)
+            if (event.target !== closeBtn && !closeBtn.contains(event.target)) {
+                panel.classList.remove('open');
+            }
+        }
+    }
+});
+
+// Portfolio functions
+async function openPortfolio() {
+    const modal = document.getElementById('portfolioModal');
+    const loading = document.getElementById('portfolioLoading');
+    const content = document.getElementById('portfolioContent');
+    const empty = document.getElementById('portfolioEmpty');
+
+    // Show modal and loading state
+    modal.style.display = 'flex';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    empty.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/portfolio');
+        const data = await response.json();
+
+        loading.style.display = 'none';
+
+        if (!data.sites || data.sites.length === 0) {
+            empty.style.display = 'block';
+        } else {
+            content.style.display = 'grid';
+            renderPortfolio(data.sites);
+        }
+    } catch (error) {
+        console.error('Failed to load portfolio:', error);
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+        document.querySelector('#portfolioEmpty p').textContent = 'Failed to load portfolio. Please try again.';
+    }
+}
+
+function closePortfolio() {
+    document.getElementById('portfolioModal').style.display = 'none';
+}
+
+function renderPortfolio(sites) {
+    const container = document.getElementById('portfolioContent');
+    container.innerHTML = '';
+
+    sites.forEach(site => {
+        const item = document.createElement('div');
+        item.className = 'portfolio-item';
+
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'portfolio-item-header';
+
+        const icon = document.createElement('span');
+        icon.className = 'portfolio-item-icon';
+        icon.textContent = getIconForSite(site.prefix);
+
+        const name = document.createElement('div');
+        name.className = 'portfolio-item-name';
+        name.textContent = site.prefix.replace(/-/g, '.').replace(/\.com$/, '.com');
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'portfolio-delete-btn';
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Delete this site from S3';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteSite(site.prefix, site.pageCount);
+        };
+
+        header.appendChild(icon);
+        header.appendChild(name);
+        header.appendChild(deleteBtn);
+
+        // Create URL link
+        const urlLink = document.createElement('a');
+        urlLink.href = site.url;
+        urlLink.target = '_blank';
+        urlLink.className = 'portfolio-item-url';
+        urlLink.textContent = site.url;
+        urlLink.onclick = (e) => e.stopPropagation();
+
+        // Create metadata
+        const meta = document.createElement('div');
+        meta.className = 'portfolio-item-meta';
+
+        const pages = document.createElement('span');
+        pages.textContent = `📄 ${site.pageCount || 'Unknown'} pages`;
+
+        const date = document.createElement('span');
+        date.textContent = `📅 ${formatDate(site.lastModified)}`;
+
+        meta.appendChild(pages);
+        meta.appendChild(date);
+
+        // Make item clickable (but not the delete button)
+        item.onclick = (e) => {
+            if (e.target !== deleteBtn && !deleteBtn.contains(e.target)) {
+                window.open(site.url, '_blank');
+            }
+        };
+
+        // Assemble the item
+        item.appendChild(header);
+        item.appendChild(urlLink);
+        item.appendChild(meta);
+
+        container.appendChild(item);
+    });
+}
+
+function getIconForSite(prefix) {
+    const icons = {
+        'capsule-com': '🌐',
+        'otter-ai': '🦦',
+        'example-com': '✅',
+        'cnn': '📰',
+        'slashdot-org': '⚡',
+        'localhost': '📍'
+    };
+    return icons[prefix] || '🌍';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString();
+}
+
+async function deleteSite(prefix, pageCount) {
+    const siteName = prefix.replace(/-/g, '.').replace(/\.com$/, '.com');
+    const fileCount = pageCount || 'Unknown';
+
+    // Confirmation dialog
+    const confirmed = confirm(
+        `🗑️ Delete "${siteName}"?\n\n` +
+        `This will permanently delete:\n` +
+        `• ${fileCount} pages\n` +
+        `• All associated assets (CSS, JS, images, fonts)\n\n` +
+        `This action cannot be undone.\n\n` +
+        `Are you sure you want to continue?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        // Show loading state
+        const modal = document.getElementById('portfolioModal');
+        const loading = document.getElementById('portfolioLoading');
+        const content = document.getElementById('portfolioContent');
+
+        content.style.display = 'none';
+        loading.style.display = 'block';
+        loading.querySelector('p').textContent = `Deleting "${siteName}"...`;
+
+        // Call delete API
+        const response = await fetch(`/api/sites/${encodeURIComponent(prefix)}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to delete site');
+        }
+
+        // Show success message
+        alert(`✅ Successfully deleted "${siteName}"\n\nRemoved ${data.deletedCount} files from S3.`);
+
+        // Reload portfolio
+        await openPortfolio();
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert(`❌ Failed to delete site: ${error.message}`);
+
+        // Reload portfolio to restore view
+        await openPortfolio();
+    }
+}

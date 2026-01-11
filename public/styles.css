@@ -909,6 +909,26 @@ header h1 {
     flex: 1;
 }
 
+.portfolio-delete-btn {
+    background: var(--terminal-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-dim);
+    font-size: 1.2em;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.portfolio-delete-btn:hover {
+    background: rgba(255, 51, 102, 0.1);
+    border-color: var(--phosphor-red);
+    color: var(--phosphor-red);
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+}
+
 .portfolio-item-url {
     font-size: 0.85rem;
     color: var(--phosphor-cyan);
