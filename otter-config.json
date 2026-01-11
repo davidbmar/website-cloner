@@ -1,0 +1,79 @@
+{
+  "target": {
+    "url": "https://otter.ai",
+    "description": "Clone otter.ai website"
+  },
+  "crawling": {
+    "maxDepth": 4,
+    "maxPages": 200,
+    "sameDomainOnly": true,
+    "respectRobotsTxt": true,
+    "followRedirects": true,
+    "ignorePatterns": [
+      "**/logout",
+      "**/login",
+      "**/signup",
+      "**/account/**",
+      "**/settings/**"
+    ],
+    "allowedPatterns": []
+  },
+  "assets": {
+    "downloadImages": true,
+    "downloadCSS": true,
+    "downloadJS": true,
+    "downloadFonts": true,
+    "downloadVideos": false,
+    "maxFileSize": 10485760,
+    "imageFormats": ["jpg", "jpeg", "png", "gif", "svg", "webp", "ico"],
+    "cssFormats": ["css"],
+    "jsFormats": ["js", "mjs"],
+    "fontFormats": ["woff", "woff2", "ttf", "otf", "eot"],
+    "videoFormats": ["mp4", "webm", "ogg"]
+  },
+  "dynamic": {
+    "detectAPIEndpoints": true,
+    "detectFormSubmissions": true,
+    "detectWebSockets": true,
+    "detectEmptyDivs": true,
+    "markerAttribute": "data-marker",
+    "markerValue": "LLM_FIX_REQUIRED",
+    "generateManifest": true
+  },
+  "network": {
+    "concurrency": 2,
+    "retryAttempts": 2,
+    "retryDelay": 2000,
+    "timeout": 20000,
+    "userAgent": "Mozilla/5.0 (compatible; WebsiteCloner/1.0)",
+    "headers": {},
+    "cookies": []
+  },
+  "rateLimit": {
+    "enabled": true,
+    "requestsPerSecond": 1,
+    "burstSize": 2
+  },
+  "output": {
+    "localDirectory": "./output",
+    "preserveDirectoryStructure": true,
+    "cleanBeforeRun": false
+  },
+  "s3": {
+    "enabled": true,
+    "bucket": "my-landing-page-1768022354",
+    "region": "us-east-1",
+    "prefix": "",
+    "acl": "public-read",
+    "configureWebsiteHosting": true,
+    "configureCors": true,
+    "indexDocument": "index.html",
+    "errorDocument": "404.html"
+  },
+  "logging": {
+    "level": "info",
+    "logToFile": true,
+    "logDirectory": "./logs",
+    "progressUpdates": true
+  }
+}
