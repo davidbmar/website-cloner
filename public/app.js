@@ -86,7 +86,7 @@ const templates = {
     capsule: {
         targetUrl: 'https://capsule.com',
         description: 'Capsule.com → S3 static clone',
-        maxDepth: 2,
+        maxDepth: 4,
         maxPages: 100,
         sameDomainOnly: true,
         respectRobotsTxt: true,
