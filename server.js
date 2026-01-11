@@ -65,7 +65,7 @@ async function runCloner(config, phase, req, res) {
             maxDepth: config.maxDepth ?? config.crawling?.maxDepth ?? 5,
             maxPages: config.maxPages ?? config.crawling?.maxPages ?? 500,
             sameDomainOnly: config.sameDomainOnly ?? config.crawling?.sameDomainOnly ?? true,
-            includeSubdomains: config.includeSubdomains ?? config.crawling?.includeSubdomains ?? false,
+            includeSubdomains: config.includeSubdomains ?? config.crawling?.includeSubdomains ?? true,
             respectRobotsTxt: config.respectRobotsTxt ?? config.crawling?.respectRobotsTxt ?? true,
             followRedirects: config.followRedirects ?? config.crawling?.followRedirects ?? true,
             ignorePatterns: config.ignorePatterns || config.crawling?.ignorePatterns || [],

@@ -274,7 +274,7 @@ function getConfigFromForm() {
             maxDepth: parseInt(document.getElementById('maxDepth').value),
             maxPages: parseInt(document.getElementById('maxPages').value),
             sameDomainOnly: document.getElementById('sameDomainOnly').checked,
-            includeSubdomains: false,
+            includeSubdomains: true,
             respectRobotsTxt: document.getElementById('respectRobotsTxt').checked,
             followRedirects: true,
             ignorePatterns: ignorePatterns,
