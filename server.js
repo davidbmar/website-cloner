@@ -55,9 +55,62 @@ async function runCloner(config, phase, req, res) {
         }
     }
 
+    // Transform flat config from frontend into nested structure for CLI
+    const cliConfig = {
+        target: {
+            url: config.url || config.target?.url,
+            description: config.description || "Website clone"
+        },
+        crawling: {
+            maxDepth: config.maxDepth ?? config.crawling?.maxDepth ?? 5,
+            maxPages: config.maxPages ?? config.crawling?.maxPages ?? 500,
+            sameDomainOnly: config.sameDomainOnly ?? config.crawling?.sameDomainOnly ?? true,
+            includeSubdomains: config.includeSubdomains ?? config.crawling?.includeSubdomains ?? false,
+            respectRobotsTxt: config.respectRobotsTxt ?? config.crawling?.respectRobotsTxt ?? true,
+            followRedirects: config.followRedirects ?? config.crawling?.followRedirects ?? true,
+            ignorePatterns: config.ignorePatterns || config.crawling?.ignorePatterns || [],
+            allowedPatterns: config.allowedPatterns || config.crawling?.allowedPatterns || []
+        },
+        assets: config.assets || {
+            downloadImages: config.downloadImages ?? true,
+            downloadCSS: config.downloadCSS ?? true,
+            downloadJS: config.downloadJS ?? true,
+            downloadFonts: config.downloadFonts ?? true,
+            downloadVideos: config.downloadVideos ?? false,
+            maxFileSize: config.maxFileSize || 10485760
+        },
+        s3: config.s3Enabled ? {
+            enabled: true,
+            bucket: config.s3Bucket || 'my-cloned-websites',
+            region: config.s3Region || 'us-east-1',
+            prefix: config.s3Prefix || '',
+            configureWebsiteHosting: config.configureWebsiteHosting ?? true
+        } : { enabled: false },
+        network: config.network || {
+            concurrency: 5,
+            timeout: 30000,
+            retryAttempts: 3,
+            retryDelay: 1000
+        },
+        rateLimit: config.rateLimit || {
+            enabled: true,
+            requestsPerSecond: 5
+        },
+        dynamic: config.dynamic || {
+            enabled: true,
+            markerValue: "LLM_FIX_REQUIRED"
+        },
+        logging: config.logging || {
+            level: "info",
+            colorize: true,
+            toFile: true,
+            logDir: "logs"
+        }
+    };
+
     // Create a temporary config file
     const configPath = path.join(__dirname, `temp-config-${Date.now()}.json`);
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    fs.writeFileSync(configPath, JSON.stringify(cliConfig, null, 2));
 
     // Set up SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
