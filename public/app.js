@@ -777,9 +777,27 @@ function renderPortfolio(sites) {
     const container = document.getElementById('portfolioContent');
     container.innerHTML = '';
 
+    // Show/hide bulk actions toolbar
+    const toolbar = document.getElementById('portfolioToolbar');
+    if (toolbar) {
+        toolbar.style.display = sites.length > 0 ? 'flex' : 'none';
+    }
+
     sites.forEach(site => {
         const item = document.createElement('div');
         item.className = 'portfolio-item';
+        item.setAttribute('data-prefix', site.prefix);
+
+        // Create checkbox for selection
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'portfolio-item-checkbox';
+        checkbox.id = `checkbox-${site.prefix}`;
+        checkbox.onclick = (e) => {
+            e.stopPropagation();
+            toggleSelection(site.prefix);
+            updateBulkActions();
+        };
 
         // Create header
         const header = document.createElement('div');
@@ -802,6 +820,7 @@ function renderPortfolio(sites) {
             deleteSite(site.prefix, site.pageCount);
         };
 
+        header.appendChild(checkbox);
         header.appendChild(icon);
         header.appendChild(name);
         header.appendChild(deleteBtn);
@@ -827,9 +846,10 @@ function renderPortfolio(sites) {
         meta.appendChild(pages);
         meta.appendChild(date);
 
-        // Make item clickable (but not the delete button)
+        // Make item clickable (but not the delete button or checkbox)
         item.onclick = (e) => {
-            if (e.target !== deleteBtn && !deleteBtn.contains(e.target)) {
+            if (e.target !== deleteBtn && !deleteBtn.contains(e.target) &&
+                e.target !== checkbox && !checkbox.contains(e.target)) {
                 window.open(site.url, '_blank');
             }
         };
@@ -841,6 +861,9 @@ function renderPortfolio(sites) {
 
         container.appendChild(item);
     });
+
+    // Reset selection state
+    clearSelection();
 }
 
 function getIconForSite(prefix) {
@@ -870,6 +893,157 @@ function formatDate(dateString) {
     if (diffDays < 7) return `${diffDays}d ago`;
 
     return date.toLocaleDateString();
+}
+
+// Bulk selection management
+let selectedSites = new Set();
+
+function toggleSelection(prefix) {
+    if (selectedSites.has(prefix)) {
+        selectedSites.delete(prefix);
+    } else {
+        selectedSites.add(prefix);
+    }
+    updateCheckboxState(prefix);
+}
+
+function updateCheckboxState(prefix) {
+    const checkbox = document.getElementById(`checkbox-${prefix}`);
+    if (checkbox) {
+        checkbox.checked = selectedSites.has(prefix);
+    }
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.portfolio-item-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+    if (selectAllCheckbox.checked) {
+        // Select all
+        checkboxes.forEach(checkbox => {
+            const prefix = checkbox.id.replace('checkbox-', '');
+            selectedSites.add(prefix);
+            checkbox.checked = true;
+        });
+    } else {
+        // Deselect all
+        selectedSites.clear();
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    updateBulkActions();
+}
+
+function clearSelection() {
+    selectedSites.clear();
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+    }
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.disabled = selectedSites.size === 0;
+    }
+
+    if (selectedCount) {
+        selectedCount.textContent = `${selectedSites.size} selected`;
+        selectedCount.style.display = selectedSites.size > 0 ? 'inline' : 'none';
+    }
+
+    // Update select all checkbox state
+    if (selectAllCheckbox) {
+        const totalCheckboxes = document.querySelectorAll('.portfolio-item-checkbox').length;
+        selectAllCheckbox.checked = selectedSites.size > 0 && selectedSites.size === totalCheckboxes;
+        selectAllCheckbox.indeterminate = selectedSites.size > 0 && selectedSites.size < totalCheckboxes;
+    }
+}
+
+async function deleteSelected() {
+    if (selectedSites.size === 0) {
+        return;
+    }
+
+    const selectedArray = Array.from(selectedSites);
+    const siteNames = selectedArray.map(prefix => prefix.replace(/-/g, '.').replace(/\.com$/, '.com')).join('\n  • ');
+
+    // Confirmation dialog
+    const confirmed = confirm(
+        `🗑️ Delete ${selectedSites.size} selected site${selectedSites.size > 1 ? 's' : ''}?\n\n` +
+        `Sites to delete:\n  • ${siteNames}\n\n` +
+        `This will permanently delete all pages and assets for these sites.\n\n` +
+        `This action cannot be undone.\n\n` +
+        `Are you sure you want to continue?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        // Show loading state
+        const modal = document.getElementById('portfolioModal');
+        const loading = document.getElementById('portfolioLoading');
+        const content = document.getElementById('portfolioContent');
+
+        content.style.display = 'none';
+        loading.style.display = 'block';
+        loading.querySelector('p').textContent = `Deleting ${selectedSites.size} sites...`;
+
+        let successCount = 0;
+        let errorCount = 0;
+        let totalDeleted = 0;
+
+        // Delete sites sequentially to avoid overwhelming the server
+        for (const prefix of selectedArray) {
+            try {
+                const response = await fetch(`/api/sites/${encodeURIComponent(prefix)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successCount++;
+                    totalDeleted += data.deletedCount || 0;
+                } else {
+                    errorCount++;
+                    console.error(`Failed to delete ${prefix}:`, data.message);
+                }
+            } catch (error) {
+                errorCount++;
+                console.error(`Error deleting ${prefix}:`, error);
+            }
+        }
+
+        // Show results
+        let message = `✅ Deleted ${successCount} site${successCount !== 1 ? 's' : ''}\n\n`;
+        message += `Removed ${totalDeleted} total files from S3.`;
+
+        if (errorCount > 0) {
+            message += `\n\n⚠️ ${errorCount} site${errorCount !== 1 ? 's' : ''} failed to delete.`;
+        }
+
+        alert(message);
+
+        // Reload portfolio
+        await openPortfolio();
+
+    } catch (error) {
+        console.error('Bulk delete error:', error);
+        alert(`❌ Failed to delete sites: ${error.message}`);
+
+        // Reload portfolio to restore view
+        await openPortfolio();
+    }
 }
 
 async function deleteSite(prefix, pageCount) {

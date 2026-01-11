@@ -278,6 +278,21 @@
             </div>
             <div class="modal-body">
                 <p class="portfolio-intro">All websites you've cloned to S3 static hosting</p>
+
+                <!-- Bulk Actions Toolbar -->
+                <div id="portfolioToolbar" class="portfolio-toolbar" style="display: none;">
+                    <div class="toolbar-left">
+                        <input type="checkbox" id="selectAllCheckbox" onclick="selectAll()" title="Select all sites">
+                        <label for="selectAllCheckbox">Select All</label>
+                        <span id="selectedCount" class="selected-count" style="display: none;">0 selected</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button id="deleteSelectedBtn" class="btn-bulk-delete" onclick="deleteSelected()" disabled title="Delete selected sites">
+                            🗑️ Delete Selected
+                        </button>
+                    </div>
+                </div>
+
                 <div id="portfolioLoading" class="portfolio-loading">
                     <div class="spinner"></div>
                     <p>Loading your cloned sites...</p>
