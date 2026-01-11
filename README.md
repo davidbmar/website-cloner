@@ -13,6 +13,36 @@ A complete website cloning tool with 6 phases: enumerate URLs, download assets, 
 - **Robots.txt**: Honor robots.txt rules
 - **Progress Tracking**: Real-time progress updates during all phases
 - **IAM Role Support**: Uses EC2 instance IAM roles for AWS credentials
+- **Web UI**: User-friendly browser interface with real-time progress monitoring
+
+## Two Ways to Use
+
+### 🌐 Web UI (Recommended for Beginners)
+
+The easiest way to clone websites with a visual interface:
+
+```bash
+npm run ui
+# Open http://localhost:3000 in your browser
+```
+
+Features:
+- Quick start templates (localhost, otter.ai, custom)
+- Form-based configuration with sensible defaults
+- Real-time progress monitoring
+- Interactive results with direct links to deployed sites
+
+See [docs/WEB_UI.md](docs/WEB_UI.md) for complete Web UI documentation.
+
+### 💻 CLI (Command Line Interface)
+
+For automation, scripting, or advanced users:
+
+```bash
+node clone-website.js --config=config.json --full
+```
+
+See below for full CLI documentation.
 
 ## Installation
 
@@ -50,7 +80,9 @@ bash verify.sh
 
 This runs automated tests to ensure everything is set up correctly.
 
-## Quick Start
+## Quick Start (CLI)
+
+**Note**: For the Web UI approach, see [docs/WEB_UI.md](docs/WEB_UI.md) or run `npm run ui`.
 
 ### 1. Create Configuration File
 

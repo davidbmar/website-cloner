@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Cloner - Web UI</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Website Cloner</h1>
+            <p class="subtitle">Clone websites to S3 with ease</p>
+        </header>
+
+        <div class="quick-start">
+            <h3>Quick Start Templates</h3>
+            <div class="template-buttons">
+                <button class="template-btn" onclick="loadTemplate('localhost')">📍 Localhost:8080</button>
+                <button class="template-btn" onclick="loadTemplate('otter')">🦦 Otter.ai</button>
+                <button class="template-btn" onclick="loadTemplate('custom')">⚙️ Custom</button>
+            </div>
+        </div>
+
+        <form id="cloneForm">
+            <!-- Target Configuration -->
+            <section class="form-section">
+                <h2>Target Website</h2>
+                <div class="form-group">
+                    <label for="targetUrl">Website URL *</label>
+                    <input type="text" id="targetUrl" name="targetUrl"
+                           placeholder="https://example.com or http://localhost:8080" required>
+                    <small>The website you want to clone</small>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <input type="text" id="description" name="description"
+                           placeholder="My awesome website">
+                </div>
+            </section>
+
+            <!-- Crawling Configuration -->
+            <section class="form-section collapsible">
+                <h2 onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span> Crawling Options
+                </h2>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxDepth">Max Depth</label>
+                            <input type="number" id="maxDepth" name="maxDepth" value="5" min="0" max="10">
+                            <small>How many links deep to crawl (0 = homepage only)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxPages">Max Pages</label>
+                            <input type="number" id="maxPages" name="maxPages" value="500" min="1" max="10000">
+                            <small>Maximum number of pages to download</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sameDomainOnly" name="sameDomainOnly" checked>
+                            Same domain only
+                        </label>
+                        <small>Only crawl pages on the same domain</small>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="respectRobotsTxt" name="respectRobotsTxt" checked>
+                            Respect robots.txt
+                        </label>
+                        <small>Follow the site's robots.txt rules</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ignorePatterns">Ignore Patterns (one per line)</label>
+                        <textarea id="ignorePatterns" name="ignorePatterns" rows="4"
+                                  placeholder="**/logout&#10;**/admin/**&#10;**/login"></textarea>
+                        <small>URL patterns to skip (glob format)</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Asset Configuration -->
+            <section class="form-section collapsible">
+                <h2 onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span> Asset Options
+                </h2>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="downloadImages" name="downloadImages" checked>
+                            Download images
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="downloadCSS" name="downloadCSS" checked>
+                            Download CSS files
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="downloadJS" name="downloadJS" checked>
+                            Download JavaScript files
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="downloadFonts" name="downloadFonts" checked>
+                            Download fonts
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="downloadVideos" name="downloadVideos">
+                            Download videos
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxFileSize">Max File Size (MB)</label>
+                        <input type="number" id="maxFileSize" name="maxFileSize" value="10" min="1" max="100">
+                        <small>Skip files larger than this size</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3 Configuration -->
+            <section class="form-section collapsible">
+                <h2 onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span> S3 Deployment
+                </h2>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="s3Enabled" name="s3Enabled" checked>
+                            Enable S3 upload
+                        </label>
+                        <small>Deploy the cloned site to S3</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="s3Bucket">S3 Bucket Name *</label>
+                        <input type="text" id="s3Bucket" name="s3Bucket"
+                               placeholder="my-cloned-websites">
+                        <small>The S3 bucket to upload to</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="s3Region">AWS Region</label>
+                        <input type="text" id="s3Region" name="s3Region" value="us-east-1"
+                               placeholder="us-east-1">
+                        <small>AWS region for the S3 bucket</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="s3Prefix">S3 Prefix (optional)</label>
+                        <input type="text" id="s3Prefix" name="s3Prefix"
+                               placeholder="my-site">
+                        <small>Subdirectory in the bucket (leave empty for root)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="configureWebsiteHosting" name="configureWebsiteHosting" checked>
+                            Configure static website hosting
+                        </label>
+                        <small>Automatically set up the bucket for web hosting</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Network Configuration -->
+            <section class="form-section collapsible collapsed">
+                <h2 onclick="toggleSection(this)">
+                    <span class="toggle-icon">▶</span> Advanced Options
+                </h2>
+                <div class="section-content" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="concurrency">Concurrency</label>
+                            <input type="number" id="concurrency" name="concurrency" value="5" min="1" max="20">
+                            <small>Number of parallel downloads</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="requestsPerSecond">Requests per Second</label>
+                            <input type="number" id="requestsPerSecond" name="requestsPerSecond" value="2" min="1" max="10">
+                            <small>Rate limit to respect target server</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="timeout">Timeout (seconds)</label>
+                        <input type="number" id="timeout" name="timeout" value="30" min="5" max="120">
+                        <small>Request timeout in seconds</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" onclick="previewConfig()">
+                    📋 Preview Config
+                </button>
+                <button type="button" class="btn btn-primary" onclick="startEnumeration()">
+                    🔍 Step 1: Enumerate URLs
+                </button>
+                <button type="button" class="btn btn-primary" id="downloadBtn" onclick="startDownload()" disabled>
+                    ⬇️ Step 2: Download & Deploy
+                </button>
+                <button type="button" class="btn btn-success" onclick="startFull()">
+                    🚀 Run Full Clone
+                </button>
+            </div>
+        </form>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="progress-section" style="display: none;">
+            <h2>Progress</h2>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text">Ready to start...</div>
+            <div id="logOutput" class="log-output"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <h2>Results</h2>
+            <div id="resultsContent" class="results-content"></div>
+        </div>
+
+        <!-- Config Preview Modal -->
+        <div id="configModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Configuration Preview</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <pre id="configPreview"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    <button class="btn btn-primary" onclick="downloadConfig()">Download Config</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
