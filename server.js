@@ -31,6 +31,12 @@ app.use((req, res, next) => {
 
 // Helper function to save config and run clone-website.js
 async function runCloner(config, phase, req, res) {
+    // DEBUG: Log incoming config from browser
+    console.log('[DEBUG] Received config from browser:');
+    console.log('[DEBUG]   s3Enabled:', config.s3Enabled);
+    console.log('[DEBUG]   s3.enabled:', config.s3?.enabled);
+    console.log('[DEBUG]   Full S3 config:', JSON.stringify(config.s3 || {s3Enabled: config.s3Enabled}, null, 2));
+
     // Clean output directory before starting (prevent pollution from old clones)
     const outputDir = path.join(__dirname, 'output');
     if (fs.existsSync(outputDir)) {
@@ -79,12 +85,13 @@ async function runCloner(config, phase, req, res) {
             downloadVideos: config.downloadVideos ?? false,
             maxFileSize: config.maxFileSize || 10485760
         },
-        s3: config.s3Enabled ? {
+        s3: (config.s3Enabled || config.s3?.enabled) ? {
             enabled: true,
-            bucket: config.s3Bucket || 'my-cloned-websites',
-            region: config.s3Region || 'us-east-1',
-            prefix: config.s3Prefix || '',
-            configureWebsiteHosting: config.configureWebsiteHosting ?? true
+            bucket: config.s3Bucket || config.s3?.bucket || 'my-cloned-websites',
+            region: config.s3Region || config.s3?.region || 'us-east-1',
+            prefix: config.s3Prefix || config.s3?.prefix || '',
+            acl: config.s3?.acl || 'public-read',
+            configureWebsiteHosting: config.configureWebsiteHosting ?? config.s3?.configureWebsiteHosting ?? true
         } : { enabled: false },
         network: config.network || {
             concurrency: 5,
@@ -324,14 +331,23 @@ async function runCloner(config, phase, req, res) {
                 finalUrl = `${baseUrl}/${s3Prefix}/`;
             }
 
-            sendSSE({
+            console.log('[DEBUG] Sending complete event:');
+            console.log('[DEBUG]   websiteUrl:', websiteUrl);
+            console.log('[DEBUG]   s3Prefix:', s3Prefix);
+            console.log('[DEBUG]   finalUrl:', finalUrl);
+            console.log('[DEBUG]   totalUrls:', totalUrls);
+            console.log('[DEBUG]   maxDepth:', maxDepth);
+
+            const completeData = {
                 type: 'complete',
                 totalUrls,
                 maxDepth,
                 manifestPath,
                 websiteUrl: finalUrl,
                 s3Prefix
-            });
+            };
+            console.log('[DEBUG] Complete event data:', JSON.stringify(completeData, null, 2));
+            sendSSE(completeData);
         } else if (code === null) {
             // Process was killed by signal (e.g., client disconnected)
             console.log(`[KILLED] Child process killed by signal: ${signal}`);

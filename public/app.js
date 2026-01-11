@@ -580,8 +580,12 @@ async function startDownload() {
                         } else if (data.type === 'progress') {
                             updateProgress(data.percent, data.message);
                         } else if (data.type === 'complete') {
+                            console.log('[FRONTEND DEBUG] Received complete event:', data);
+                            console.log('[FRONTEND DEBUG] websiteUrl:', data.websiteUrl);
+                            console.log('[FRONTEND DEBUG] s3Prefix:', data.s3Prefix);
                             updateProgress(100, 'Clone complete!');
                             addLog('Download and deployment completed successfully!', 'success');
+                            console.log('[FRONTEND DEBUG] Calling showResults with:', data);
                             showResults(data);
                         } else if (data.type === 'error') {
                             addLog('Error: ' + data.message, 'error');
