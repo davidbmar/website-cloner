@@ -147,6 +147,10 @@ async function runCloner(config, phase, req, res) {
     // Small delay to ensure SSE connection is established
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    // DEBUG: Log what config we're using
+    console.log('[DEBUG] CLI Config includeSubdomains:', cliConfig.crawling.includeSubdomains);
+    console.log('[DEBUG] CLI Config URL:', cliConfig.target.url);
+
     // Spawn the clone-website.js process
     console.log(`Starting clone-website.js with config: ${configPath}, phase: ${phase}`);
     const child = spawn('node', [

@@ -485,7 +485,7 @@ async function startEnumeration() {
     }
 
     try {
-        const response = await fetch('/api/enumerate', {
+        const response = await fetch('./api/enumerate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -549,7 +549,7 @@ async function startDownload() {
     }
 
     try {
-        const response = await fetch('/api/download', {
+        const response = await fetch('./api/download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -627,7 +627,7 @@ async function startFull() {
 
     try {
         console.log('Starting full clone request...');
-        const response = await fetch('/api/full', {
+        const response = await fetch('./api/full', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -684,7 +684,7 @@ async function startFull() {
 // Load config defaults from server
 async function loadConfigDefaults() {
     try {
-        const response = await fetch('/api/config-defaults');
+        const response = await fetch('./api/config-defaults');
         const defaults = await response.json();
 
         configDefaults = {
@@ -760,7 +760,7 @@ async function openPortfolio() {
     empty.style.display = 'none';
 
     try {
-        const response = await fetch('/api/portfolio');
+        const response = await fetch('./api/portfolio');
         const data = await response.json();
 
         loading.style.display = 'none';
