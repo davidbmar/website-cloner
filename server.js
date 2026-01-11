@@ -17,7 +17,7 @@ app.use(express.static('public'));
 // CORS middleware for SSE
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
@@ -445,6 +445,106 @@ app.get('/api/portfolio', async (req, res) => {
     } catch (error) {
         console.error('Portfolio error:', error);
         res.status(500).json({ error: 'Failed to load portfolio', sites: [] });
+    }
+});
+
+// Delete site endpoint - deletes all S3 objects with matching prefix
+app.delete('/api/sites/:prefix', async (req, res) => {
+    try {
+        const sitePrefix = req.params.prefix;
+
+        if (!sitePrefix) {
+            return res.status(400).json({ error: 'Site prefix is required' });
+        }
+
+        console.log(`[DELETE] Deleting site with prefix: ${sitePrefix}`);
+
+        // Import S3Client dynamically
+        const { S3Client, ListObjectsV2Command, DeleteObjectsCommand } = await import('@aws-sdk/client-s3');
+
+        // Read config to get bucket info
+        let configPath = path.join(__dirname, 'otter-config.json');
+        if (!fs.existsSync(configPath)) {
+            configPath = path.join(__dirname, 'config.example.json');
+        }
+
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const bucketName = config.s3?.bucket || 'my-landing-page-1768022354';
+        const region = config.s3?.region || 'us-east-1';
+
+        // Create S3 client
+        const s3Client = new S3Client({ region });
+
+        // List all objects with this prefix
+        let allObjects = [];
+        let continuationToken = null;
+
+        do {
+            const listCommand = new ListObjectsV2Command({
+                Bucket: bucketName,
+                Prefix: `${sitePrefix}/`,
+                ContinuationToken: continuationToken
+            });
+
+            const listResponse = await s3Client.send(listCommand);
+            const objects = listResponse.Contents || [];
+
+            allObjects = allObjects.concat(objects);
+            continuationToken = listResponse.NextContinuationToken;
+
+            console.log(`[DELETE] Found ${objects.length} objects (total: ${allObjects.length})`);
+        } while (continuationToken);
+
+        if (allObjects.length === 0) {
+            return res.json({
+                success: true,
+                deletedCount: 0,
+                message: 'No objects found with this prefix'
+            });
+        }
+
+        console.log(`[DELETE] Deleting ${allObjects.length} objects from S3...`);
+
+        // Delete objects in batches of 1000 (S3 limit)
+        const batchSize = 1000;
+        let totalDeleted = 0;
+
+        for (let i = 0; i < allObjects.length; i += batchSize) {
+            const batch = allObjects.slice(i, i + batchSize);
+
+            const deleteCommand = new DeleteObjectsCommand({
+                Bucket: bucketName,
+                Delete: {
+                    Objects: batch.map(obj => ({ Key: obj.Key })),
+                    Quiet: false
+                }
+            });
+
+            const deleteResponse = await s3Client.send(deleteCommand);
+            const deleted = deleteResponse.Deleted || [];
+            totalDeleted += deleted.length;
+
+            console.log(`[DELETE] Batch ${Math.floor(i / batchSize) + 1}: Deleted ${deleted.length} objects`);
+
+            if (deleteResponse.Errors && deleteResponse.Errors.length > 0) {
+                console.error('[DELETE] Errors:', deleteResponse.Errors);
+            }
+        }
+
+        console.log(`[DELETE] Successfully deleted ${totalDeleted} objects for site: ${sitePrefix}`);
+
+        res.json({
+            success: true,
+            deletedCount: totalDeleted,
+            message: `Deleted ${totalDeleted} files from S3`
+        });
+
+    } catch (error) {
+        console.error('[DELETE] Error:', error);
+        res.status(500).json({
+            error: 'Failed to delete site',
+            message: error.message
+        });
     }
 });
 

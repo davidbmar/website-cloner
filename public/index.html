@@ -9,16 +9,43 @@
 <body>
     <div class="container">
         <header>
-            <h1>🌐 Website Cloner</h1>
-            <p class="subtitle">Clone websites to S3 with ease</p>
+            <div class="header-content">
+                <div>
+                    <h1>🌐 Website Cloner</h1>
+                    <p class="subtitle">Clone websites to S3 with ease</p>
+                </div>
+                <div class="header-buttons">
+                    <div class="user-profile" id="userProfile">
+                        <span class="user-display" id="userDisplay">👤 Not signed in</span>
+                        <button class="user-btn" onclick="showUserDialog()" title="Sign in">Sign In</button>
+                    </div>
+                    <button class="portfolio-btn" onclick="openPortfolio()" title="View all cloned sites">
+                        📁 Portfolio
+                    </button>
+                    <button class="rationale-toggle" onclick="toggleRationale()" title="View Rationale & First Principles">
+                        📖 Why S3?
+                    </button>
+                </div>
+            </div>
         </header>
 
         <div class="quick-start">
             <h3>Quick Start Templates</h3>
+            <p class="quick-start-desc">Clone popular sites to S3 static hosting with one click. Select a template to auto-fill settings.</p>
             <div class="template-buttons">
-                <button class="template-btn" onclick="loadTemplate('localhost')">📍 Localhost:8080</button>
-                <button class="template-btn" onclick="loadTemplate('otter')">🦦 Otter.ai</button>
-                <button class="template-btn" onclick="loadTemplate('custom')">⚙️ Custom</button>
+                <button class="template-btn" onclick="loadTemplate('capsule')" title="Clone Capsule.com marketing site to S3">
+                    <span class="btn-icon">🌐</span>
+                    <span class="btn-text">
+                        <strong>Capsule.com</strong>
+                        <small>→ S3 Clone</small>
+                    </span>
+                </button>
+                <button class="template-btn" onclick="loadTemplate('localhost')" title="Clone local development site">📍 Localhost:8080</button>
+                <button class="template-btn" onclick="loadTemplate('otter')" title="Clone Otter.ai to S3">🦦 Otter.ai</button>
+                <button class="template-btn" onclick="loadTemplate('example')" title="Simple test site">✅ Example.com</button>
+                <button class="template-btn" onclick="loadTemplate('cnn')" title="Clone CNN news site">📰 CNN</button>
+                <button class="template-btn" onclick="loadTemplate('slashdot')" title="Clone Slashdot tech news">⚡ Slashdot</button>
+                <button class="template-btn" onclick="loadTemplate('custom')" title="Configure manually">⚙️ Custom</button>
             </div>
         </div>
 
@@ -238,6 +265,92 @@
                     <button class="btn btn-secondary" onclick="closeModal()">Close</button>
                     <button class="btn btn-primary" onclick="downloadConfig()">Download Config</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Modal -->
+    <div id="portfolioModal" class="modal" style="display: none;">
+        <div class="modal-content portfolio-modal">
+            <div class="modal-header">
+                <h2>📁 Cloned Sites Portfolio</h2>
+                <button class="close-btn" onclick="closePortfolio()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="portfolio-intro">All websites you've cloned to S3 static hosting</p>
+                <div id="portfolioLoading" class="portfolio-loading">
+                    <div class="spinner"></div>
+                    <p>Loading your cloned sites...</p>
+                </div>
+                <div id="portfolioContent" class="portfolio-grid" style="display: none;">
+                    <!-- Portfolio items will be inserted here -->
+                </div>
+                <div id="portfolioEmpty" class="portfolio-empty" style="display: none;">
+                    <p>No cloned sites found yet.</p>
+                    <p class="hint">Clone your first site using the templates above!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rationale Side Panel -->
+    <div id="rationalePanel" class="rationale-panel">
+        <div class="rationale-content">
+            <div class="rationale-header">
+                <h2>First Principles: Why S3?</h2>
+                <button class="close-rationale" onclick="toggleRationale()" title="Close">&times;</button>
+            </div>
+            <div class="rationale-body">
+                <section class="rationale-section">
+                    <h3>Purpose</h3>
+                    <p>The primary purpose of a website is to deliver information reliably, economically, and at scale. Any architectural choice must therefore be evaluated by how well it serves this objective over time, not by technical novelty or completeness.</p>
+                    <p class="principle">The default assumption should be that content is <strong>static</strong> unless there is a demonstrated and sustained need for dynamic behavior.</p>
+                </section>
+
+                <section class="rationale-section">
+                    <h3>Decision</h3>
+                    <p>Use Amazon S3 as the foundational substrate for hosting and cloning websites by flattening content into static assets (HTML, CSS, JavaScript, media).</p>
+                </section>
+
+                <section class="rationale-section">
+                    <h3>Rationale</h3>
+
+                    <div class="rationale-item">
+                        <h4>💰 Cost Discipline</h4>
+                        <p>Infrastructure decisions are long-term commitments. Database- and server-centric architectures impose fixed and recurring costs regardless of utilization. S3 operates on a variable cost model aligned with actual usage. Costs scale linearly with value delivered, making the system economically sustainable from inception through growth.</p>
+                    </div>
+
+                    <div class="rationale-item">
+                        <h4>🛡️ Reliability Through Simplicity</h4>
+                        <p>Reliability increases as decision points decrease. Each additional runtime component introduces failure modes and operational overhead. An S3-backed website removes entire classes of failures by eliminating servers, application runtimes, and databases from the critical path. Content delivery becomes a simple retrieval operation.</p>
+                    </div>
+
+                    <div class="rationale-item">
+                        <h4>📈 Scalability Without Reorganization</h4>
+                        <p>S3 scales by default. Growth in traffic does not require architectural redesign, operational intervention, or proportional increases in staffing. This preserves organizational focus on outcomes rather than internal complexity.</p>
+                    </div>
+
+                    <div class="rationale-item">
+                        <h4>🔒 Security by Structure</h4>
+                        <p>Security is most effective when enforced by architecture, not behavior. Static content served from S3 has no execution context and therefore a sharply reduced attack surface. Public access is read-only; write access is tightly controlled. Risk is constrained by design rather than policy alone.</p>
+                    </div>
+
+                    <div class="rationale-item">
+                        <h4>📦 Content as a Durable Asset</h4>
+                        <p>Flattening a website converts content from a process into an asset. Static artifacts are portable, auditable, versionable, and reproducible. Sites can be cloned, archived, or redeployed without recreating application environments. Knowledge becomes durable and independent of the systems that produced it.</p>
+                    </div>
+
+                    <div class="rationale-item">
+                        <h4>🔀 Optionality and Incremental Complexity</h4>
+                        <p>Starting with S3 establishes a disciplined baseline. More complex capabilities—APIs, personalization, computation—can be layered on only when clearly justified. This avoids premature commitment and preserves strategic flexibility.</p>
+                    </div>
+                </section>
+
+                <section class="rationale-section conclusion">
+                    <h3>Conclusion</h3>
+                    <p>Using S3 as the foundation for website deployment is not a technical shortcut; it is a <strong>managerial decision</strong>. It minimizes cost, reduces risk, increases reliability, and preserves optionality while fully satisfying the system's primary purpose.</p>
+                    <p class="conclusion-emphasis">It does the right thing—and does it efficiently.</p>
+                </section>
             </div>
         </div>
     </div>

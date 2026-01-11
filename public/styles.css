@@ -627,6 +627,56 @@ header h1 {
     align-items: center;
 }
 
+/* User Profile */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--terminal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.user-display {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.user-profile.signed-in .user-display {
+    color: var(--phosphor-green);
+}
+
+.user-btn {
+    padding: 6px 14px;
+    background: var(--terminal-bg);
+    border: 1px solid var(--phosphor-green);
+    color: var(--phosphor-green);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.user-btn:hover {
+    background: rgba(0, 255, 159, 0.1);
+    box-shadow: var(--glow-green);
+    transform: translateY(-1px);
+}
+
+.user-btn.sign-out {
+    border-color: var(--phosphor-red);
+    color: var(--phosphor-red);
+}
+
+.user-btn.sign-out:hover {
+    background: rgba(255, 51, 102, 0.1);
+    box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
+}
+
 /* Portfolio Button */
 .portfolio-btn {
     padding: 10px 20px;

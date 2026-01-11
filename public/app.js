@@ -1,3 +1,77 @@
+// User Management
+let currentUser = null;
+
+// Initialize user on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadUser();
+    updateUserDisplay();
+});
+
+function loadUser() {
+    const stored = localStorage.getItem('website_cloner_user');
+    if (stored) {
+        try {
+            currentUser = JSON.parse(stored);
+        } catch (e) {
+            currentUser = null;
+        }
+    }
+}
+
+function saveUser(user) {
+    currentUser = user;
+    localStorage.setItem('website_cloner_user', JSON.stringify(user));
+    updateUserDisplay();
+}
+
+function clearUser() {
+    currentUser = null;
+    localStorage.removeItem('website_cloner_user');
+    updateUserDisplay();
+}
+
+function updateUserDisplay() {
+    const profileDiv = document.getElementById('userProfile');
+    const displaySpan = document.getElementById('userDisplay');
+    const button = profileDiv.querySelector('.user-btn');
+
+    if (currentUser) {
+        profileDiv.classList.add('signed-in');
+        displaySpan.textContent = `👤 ${currentUser.username || currentUser.email}`;
+        button.textContent = 'Sign Out';
+        button.className = 'user-btn sign-out';
+        button.onclick = signOut;
+    } else {
+        profileDiv.classList.remove('signed-in');
+        displaySpan.textContent = '👤 Not signed in';
+        button.textContent = 'Sign In';
+        button.className = 'user-btn';
+        button.onclick = showUserDialog;
+    }
+}
+
+function showUserDialog() {
+    const username = prompt('Enter your username or email:\n\n(This will be used to track who created each cloned site)');
+    if (username && username.trim()) {
+        saveUser({
+            username: username.trim(),
+            signedInAt: new Date().toISOString()
+        });
+        alert(`✅ Signed in as: ${username.trim()}`);
+    }
+}
+
+function signOut() {
+    if (confirm('Sign out?\n\nYou will no longer be tracked as the creator of new clones.')) {
+        clearUser();
+        alert('✅ Signed out successfully');
+    }
+}
+
+function getCurrentUser() {
+    return currentUser;
+}
+
 // Global config defaults (loaded from server)
 let configDefaults = {
     s3Bucket: 'my-landing-page',
@@ -394,6 +468,12 @@ async function startEnumeration() {
     updateProgress(10, 'Starting enumeration...');
     addLog('Starting URL enumeration phase...', 'info');
 
+    // Add user information if signed in
+    if (currentUser) {
+        config.creator = currentUser;
+        addLog(`👤 Cloning as: ${currentUser.username}`, 'info');
+    }
+
     try {
         const response = await fetch('/api/enumerate', {
             method: 'POST',
@@ -451,6 +531,12 @@ async function startDownload() {
     showProgress();
     updateProgress(10, 'Starting download...');
     addLog('Starting download and deployment phase...', 'info');
+
+    // Add user information if signed in
+    if (currentUser) {
+        config.creator = currentUser;
+        addLog(`👤 Cloning as: ${currentUser.username}`, 'info');
+    }
 
     try {
         const response = await fetch('/api/download', {
@@ -522,6 +608,12 @@ async function startFull() {
     showProgress();
     updateProgress(5, 'Starting full clone...');
     addLog('Starting full clone (enumerate + download)...', 'info');
+
+    // Add user information if signed in
+    if (currentUser) {
+        config.creator = currentUser;
+        addLog(`👤 Cloning as: ${currentUser.username}`, 'info');
+    }
 
     try {
         console.log('Starting full clone request...');
