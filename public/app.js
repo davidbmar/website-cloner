@@ -214,6 +214,7 @@ function loadTemplate(templateName) {
     document.getElementById('ignorePatterns').value = ignorePatterns;
 
     // Use config defaults for S3 bucket and region
+    document.getElementById('s3Enabled').checked = template.s3Enabled ?? true; // Enable S3 by default for templates
     document.getElementById('s3Bucket').value = template.s3Bucket ?? configDefaults.s3Bucket;
     document.getElementById('s3Region').value = template.s3Region ?? configDefaults.s3Region;
 
