@@ -29,6 +29,23 @@ app.use((req, res, next) => {
     }
 });
 
+// User authentication middleware
+// This app does NOT handle authentication - it receives user info from the reverse proxy
+app.use((req, res, next) => {
+    // User info comes from nginx headers (set by cognito-auth-gateway)
+    req.user = {
+        email: req.headers['x-user-email'] || 'anonymous',
+        username: req.headers['x-user'] || req.headers['x-user-email'] || 'anonymous'
+    };
+
+    // Log user access for debugging
+    if (req.user.email !== 'anonymous') {
+        console.log(`[AUTH] User: ${req.user.email} accessed ${req.method} ${req.path}`);
+    }
+
+    next();
+});
+
 // Helper function to save config and run clone-website.js
 async function runCloner(config, phase, req, res) {
     // DEBUG: Log incoming config from browser
