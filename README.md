@@ -80,6 +80,37 @@ bash verify.sh
 
 This runs automated tests to ensure everything is set up correctly.
 
+### Service Installation (For Web UI Deployment)
+
+To run the Web UI as a systemd service with nginx integration:
+
+1. **Ensure auth gateway is set up first** (required for nginx includes)
+
+2. **Install dependencies** (if not already done):
+   ```bash
+   bash setup.sh
+   ```
+
+3. **Run bootstrap service script**:
+   ```bash
+   ./bootstrap-service.sh
+   ```
+
+The bootstrap script will:
+- Verify Node.js dependencies are installed
+- Create required directories (output, logs)
+- Install systemd service for auto-start of Web UI
+- Copy nginx configurations to modular include directories
+- Start the website-cloner service
+
+4. **Check service status**:
+   ```bash
+   sudo systemctl status website-cloner
+   sudo journalctl -u website-cloner -f
+   ```
+
+The Web UI will be accessible at `https://YOUR_IP/cloner/`.
+
 ## Quick Start (CLI)
 
 **Note**: For the Web UI approach, see [docs/WEB_UI.md](docs/WEB_UI.md) or run `npm run ui`.
